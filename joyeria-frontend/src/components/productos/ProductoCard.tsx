@@ -5,8 +5,8 @@ interface ProductoCardProps {
   nombre: string;
   descripcion: string;
   precio: number;
-  imagenUrl: string;
-  categoria: string;
+  imagenUrl?: string;
+  categoria?: string;
 }
 
 export default function ProductoCard({

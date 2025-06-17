@@ -8,22 +8,22 @@ namespace JoyeriaBackend.Models
 
         [Required]
         [StringLength(100)]
-        public string Nombre { get; set; }
+        public required string Nombre { get; set; }
 
         [Required]
-        public string Descripcion { get; set; }
+        public required string Descripcion { get; set; }
 
         [Required]
         public decimal Precio { get; set; }
 
-        public string ImagenUrl { get; set; }
+        public string? ImagenUrl { get; set; }
 
         [Required]
-        public string Categoria { get; set; }
+        public required string Categoria { get; set; }
 
-        public string Material { get; set; }
+        public string? Material { get; set; }
 
-        public string Peso { get; set; }
+        public string? Peso { get; set; }
 
         public bool Disponible { get; set; } = true;
 

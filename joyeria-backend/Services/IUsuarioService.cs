@@ -1,16 +1,16 @@
 using JoyeriaBackend.Models;
+using JoyeriaBackend.DTOs;
 
 namespace JoyeriaBackend.Services
 {
     public interface IUsuarioService
     {
-        Task<Usuario> GetByIdAsync(int id);
-        Task<Usuario> GetByEmailAsync(string email);
         Task<IEnumerable<Usuario>> GetAllAsync();
-        Task<Usuario> CreateAsync(Usuario usuario, string password);
-        Task<Usuario> UpdateAsync(Usuario usuario);
-        Task DeleteAsync(int id);
-        Task<bool> ValidateCredentialsAsync(string email, string password);
-        Task<string> GenerateJwtTokenAsync(Usuario usuario);
+        Task<Usuario?> GetByIdAsync(int id);
+        Task<Usuario> CreateAsync(Usuario usuario);
+        Task<Usuario?> UpdateAsync(int id, Usuario usuario);
+        Task<bool> DeleteAsync(int id);
+        Task<AuthResult> Register(RegisterDto registerDto);
+        Task<AuthResult> Login(LoginDto loginDto);
     }
 } 

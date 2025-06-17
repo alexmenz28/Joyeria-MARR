@@ -11,18 +11,18 @@ namespace JoyeriaBackend.Models
         public int UsuarioId { get; set; }
 
         [ForeignKey("UsuarioId")]
-        public Usuario Usuario { get; set; }
+        public Usuario Usuario { get; set; } = null!;
 
         public DateTime FechaPedido { get; set; } = DateTime.UtcNow;
 
         [Required]
-        public string Estado { get; set; } // "Pendiente", "En Proceso", "Completado", "Cancelado"
+        public required string Estado { get; set; } // "Pendiente", "En Proceso", "Completado", "Cancelado"
 
-        public string Notas { get; set; }
+        public string? Notas { get; set; }
 
-        public decimal Total { get; set; }
+        public decimal Total { get; set; } = 0;
 
-        public List<DetallePedido> Detalles { get; set; }
+        public List<DetallePedido> Detalles { get; set; } = new List<DetallePedido>();
     }
 
     public class DetallePedido
@@ -33,17 +33,17 @@ namespace JoyeriaBackend.Models
         public int PedidoId { get; set; }
 
         [ForeignKey("PedidoId")]
-        public Pedido Pedido { get; set; }
+        public Pedido Pedido { get; set; } = null!;
 
         public int? ProductoId { get; set; }
 
         [ForeignKey("ProductoId")]
-        public Producto Producto { get; set; }
+        public Producto? Producto { get; set; }
 
         public int Cantidad { get; set; }
 
         public decimal PrecioUnitario { get; set; }
 
-        public string DescripcionPersonalizada { get; set; }
+        public string? DescripcionPersonalizada { get; set; }
     }
 } 

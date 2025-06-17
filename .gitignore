@@ -1,0 +1,36 @@
+# Backend (.NET)
+joyeria-backend/bin/
+joyeria-backend/obj/
+joyeria-backend/*.user
+joyeria-backend/*.suo
+joyeria-backend/*.userosscache
+joyeria-backend/*.sln.docstates
+joyeria-backend/.vs/
+joyeria-backend/appsettings.Development.json
+joyeria-backend/appsettings.Production.json
+
+# Frontend (React)
+joyeria-frontend/node_modules/
+joyeria-frontend/.pnp
+joyeria-frontend/.pnp.js
+joyeria-frontend/coverage/
+joyeria-frontend/build/
+joyeria-frontend/.DS_Store
+joyeria-frontend/.env.local
+joyeria-frontend/.env.development.local
+joyeria-frontend/.env.test.local
+joyeria-frontend/.env.production.local
+joyeria-frontend/npm-debug.log*
+joyeria-frontend/yarn-debug.log*
+joyeria-frontend/yarn-error.log*
+
+# IDEs y editores
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db 

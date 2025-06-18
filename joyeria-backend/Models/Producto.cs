@@ -30,5 +30,6 @@ namespace JoyeriaBackend.Models
         public int Stock { get; set; }
 
         public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+        public DateTime FechaActualizacion { get; set; } = DateTime.UtcNow;
     }
 } 

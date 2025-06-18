@@ -10,4 +10,6 @@ export interface Producto {
   disponible: boolean;
   material: string;
   peso: number;
+  imagen: string;
+  fechaActualizacion: string;
 } 

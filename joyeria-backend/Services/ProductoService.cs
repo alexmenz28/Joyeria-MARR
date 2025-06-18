@@ -56,13 +56,33 @@ namespace JoyeriaBackend.Services
 
         public async Task<Producto> UpdateAsync(Producto producto, IFormFile? imagen = null)
         {
+            var productoExistente = await _context.Productos.FindAsync(producto.Id);
+            if (productoExistente == null)
+            {
+                throw new KeyNotFoundException($"Producto con ID {producto.Id} no encontrado.");
+            }
+
+            // Copiar las propiedades actualizables del producto entrante al producto existente
+            productoExistente.Nombre = producto.Nombre;
+            productoExistente.Descripcion = producto.Descripcion;
+            productoExistente.Precio = producto.Precio;
+            productoExistente.Categoria = producto.Categoria;
+            productoExistente.Material = producto.Material;
+            productoExistente.Peso = producto.Peso;
+            productoExistente.Disponible = producto.Disponible;
+            productoExistente.Stock = producto.Stock;
+            productoExistente.FechaActualizacion = DateTime.UtcNow; // Actualizar la fecha de modificación
+
+            // **SOLO** actualizar la ImagenUrl si se proporciona un nuevo archivo de imagen
             if (imagen != null)
             {
-                producto.ImagenUrl = await UploadImageAsync(imagen);
+                productoExistente.ImagenUrl = await UploadImageAsync(imagen);
             }
-            _context.Entry(producto).State = EntityState.Modified;
+            // Si 'imagen' es null, simplemente NO hacemos nada con productoExistente.ImagenUrl,
+            // lo que permite que Entity Framework Core conserve el valor existente en la base de datos.
+
             await _context.SaveChangesAsync();
-            return producto;
+            return productoExistente;
         }
 
         public async Task DeleteAsync(int id)

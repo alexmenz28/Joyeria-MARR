@@ -46,10 +46,10 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 p-10 bg-white rounded-xl shadow-lg">
+    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8 pt-8 transition-colors">
+      <div className="max-w-md w-full space-y-8 p-10 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 transition-colors">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-marrGold">
             Inicia sesión en tu cuenta
           </h2>
         </div>
@@ -63,7 +63,7 @@ const Login = () => {
                 type="email"
                 autoComplete="email"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-marrGold placeholder-gray-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 rounded-t-md focus:outline-none focus:ring-marrGold focus:border-marrGold focus:z-10 sm:text-sm"
                 placeholder="Dirección de Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -77,7 +77,7 @@ const Login = () => {
                 type="password"
                 autoComplete="current-password"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-marrGold placeholder-gray-500 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 rounded-b-md focus:outline-none focus:ring-marrGold focus:border-marrGold focus:z-10 sm:text-sm"
                 placeholder="Contraseña"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -102,15 +102,15 @@ const Login = () => {
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              className="group relative w-full flex justify-center py-2 px-4 border border-marrGold text-sm font-medium rounded-md text-white bg-marrGold hover:bg-marrGold/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-marrGold shadow"
             >
               Inicia sesión
             </button>
           </div>
         </form>
         <div className="text-center">
-          <p className="text-sm text-gray-600">
-            ¿No tienes una cuenta? <a href="/registro" className="font-medium text-primary-600 hover:text-primary-500">Regístrate aquí</a>
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            ¿No tienes una cuenta? <a href="/registro" className="font-medium text-marrGold hover:text-marrGold/80">Regístrate aquí</a>
           </p>
         </div>
       </div>

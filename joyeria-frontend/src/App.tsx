@@ -1,6 +1,7 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import './App.css';
+import ProtectedRoute from './components/common/ProtectedRoute';
 
 // Importación de componentes de diseño
 import Navbar from './components/layout/Navbar';
@@ -24,11 +25,13 @@ import SalesManagement from './pages/admin/SalesManagement';
 import UserManagement from './pages/admin/UserManagement';
 import OrderManagement from './pages/admin/OrderManagement';
 
-function App() {
+function AppRoutes() {
+  const location = useLocation();
+  const hideNavbar = location.pathname === '/iniciar-sesion' || location.pathname === '/registro';
   return (
-    <Router>
-      <Navbar />
-      <div className="container mx-auto p-4">
+    <>
+      {!hideNavbar && <Navbar />}
+      <div className="min-h-screen w-screen bg-white dark:bg-gradient-to-br dark:from-[#181c2a] dark:via-[#23263a] dark:to-[#1a1d2b] transition-colors">
         <Routes>
           {/* Rutas de Usuario/Cliente */}
           <Route path="/" element={<Home />} />
@@ -43,13 +46,35 @@ function App() {
           <Route path="/contacto" element={<Contact />} />
 
           {/* Rutas de Administración */}
-          <Route path="/admin/dashboard" element={<Dashboard />} />
-          <Route path="/admin/productos" element={<ProductManagement />} />
-          <Route path="/admin/ventas" element={<SalesManagement />} />
-          <Route path="/admin/usuarios" element={<UserManagement />} />
-          <Route path="/admin/pedidos" element={<OrderManagement />} />
+          <Route path="/admin/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/admin/productos" element={<ProtectedRoute><ProductManagement /></ProtectedRoute>} />
+          <Route path="/admin/ventas" element={<ProtectedRoute><SalesManagement /></ProtectedRoute>} />
+          <Route path="/admin/usuarios" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
+          <Route path="/admin/pedidos" element={<ProtectedRoute><OrderManagement /></ProtectedRoute>} />
         </Routes>
       </div>
+    </>
+  );
+}
+
+function App() {
+  // Lógica global de modo oscuro
+  useEffect(() => {
+    // Preferencia guardada
+    const stored = localStorage.getItem('darkMode');
+    let dark = false;
+    if (stored === null) {
+      // Si no hay preferencia, usar la del sistema
+      dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    } else {
+      dark = stored === 'true';
+    }
+    document.documentElement.classList.toggle('dark', dark);
+  }, []);
+
+  return (
+    <Router>
+      <AppRoutes />
     </Router>
   );
 }

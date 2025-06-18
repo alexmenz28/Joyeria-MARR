@@ -57,7 +57,7 @@ namespace JoyeriaBackend.Controllers
 
         [Authorize(Roles = "Admin,Empleado")]
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateProducto(int id, [FromForm] Producto producto, IFormFile imagen)
+        public async Task<IActionResult> UpdateProducto(int id, [FromForm] Producto producto, IFormFile? imagen)
         {
             if (id != producto.Id)
             {

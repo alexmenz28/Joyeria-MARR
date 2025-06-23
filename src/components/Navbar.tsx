@@ -12,7 +12,7 @@ const Navbar: React.FC = () => {
           Joyería MARR
         </Link>
         <div className="flex items-center space-x-6">
-          <Link to="/catalog" className="hover:text-gray-300 transition-colors duration-200">Catálogo</Link>
+          <Link to="/catalogo" className="hover:text-gray-300 transition-colors duration-200">Catálogo</Link>
           <Link to="/custom-order" className="hover:text-gray-300 transition-colors duration-200">Pedido Personalizado</Link>
           <Link to="/contact" className="hover:text-gray-300 transition-colors duration-200">Contacto</Link>
           <Link to="/cart" className="hover:text-gray-300 transition-colors duration-200">Carrito</Link>

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import './App.css';
 import ProtectedRoute from './components/common/ProtectedRoute';
 
@@ -27,11 +28,11 @@ import OrderManagement from './pages/admin/OrderManagement';
 
 function AppRoutes() {
   const location = useLocation();
-  const hideNavbar = location.pathname === '/iniciar-sesion' || location.pathname === '/registro';
+  const hideNavbar = location.pathname === '/iniciar-sesion' || location.pathname === '/registro' || location.pathname.startsWith('/admin');
   return (
     <>
       {!hideNavbar && <Navbar />}
-      <div className="min-h-screen w-screen bg-white dark:bg-gradient-to-br dark:from-[#181c2a] dark:via-[#23263a] dark:to-[#1a1d2b] transition-colors">
+      <div className="min-h-screen w-screen bg-white dark:bg-gray-900 transition-colors">
         <Routes>
           {/* Rutas de Usuario/Cliente */}
           <Route path="/" element={<Home />} />
@@ -73,9 +74,11 @@ function App() {
   }, []);
 
   return (
-    <Router>
-      <AppRoutes />
-    </Router>
+    <HelmetProvider>
+      <Router>
+        <AppRoutes />
+      </Router>
+    </HelmetProvider>
   );
 }
 

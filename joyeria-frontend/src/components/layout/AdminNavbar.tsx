@@ -1,33 +1,29 @@
 import { Fragment, useEffect, useState } from 'react';
 import { Disclosure, Menu, Transition } from '@headlessui/react';
-import { Bars3Icon, XMarkIcon, ShoppingCartIcon, MoonIcon, SunIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, XMarkIcon, MoonIcon, SunIcon } from '@heroicons/react/24/outline';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
-
-const userNavigation = [
-  { name: 'Inicio', href: '/' },
-  { name: 'Catálogo', href: '/catalogo' },
-  { name: 'Contacto', href: '/contacto' },
-];
+import useDarkMode from '../../hooks/useDarkMode';
 
 const adminNavigation = [
-    { name: 'Dashboard', href: '/admin/dashboard' },
-    { name: 'Productos', href: '/admin/productos' },
-    { name: 'Pedidos', href: '/admin/pedidos' },
-    { name: 'Usuarios', href: '/admin/usuarios' },
-    { name: 'Ventas', href: '/admin/ventas' },
-]
+  { name: 'Dashboard', href: '/admin/dashboard' },
+  { name: 'Productos', href: '/admin/productos' },
+  { name: 'Pedidos', href: '/admin/pedidos' },
+  { name: 'Usuarios', href: '/admin/usuarios' },
+  { name: 'Ventas', href: '/admin/ventas' },
+  { name: 'Ver Tienda', href: '/' },
+];
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
 }
 
-export default function Navbar() {
+export default function AdminNavbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useDarkMode();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -45,13 +41,6 @@ export default function Navbar() {
     }
   }, [location]);
 
-  useEffect(() => {
-    // Detectar preferencia del usuario o del sistema
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    setDarkMode(prefersDark);
-    document.documentElement.classList.toggle('dark', prefersDark);
-  }, []);
-
   const handleLogout = () => {
     localStorage.removeItem('token');
     setIsAuthenticated(false);
@@ -59,24 +48,15 @@ export default function Navbar() {
     navigate('/');
   };
 
-  const toggleDarkMode = () => {
-    setDarkMode((prev) => {
-      document.documentElement.classList.toggle('dark', !prev);
-      return !prev;
-    });
-  };
-
-  const navigation = userRole === 'admin' ? adminNavigation : userNavigation;
-
   return (
-    <Disclosure as="nav" className="sticky top-0 z-50 bg-white dark:bg-gradient-to-br dark:from-[#181c2a] dark:via-[#23263a] dark:to-[#1a1d2b] shadow transition-colors">
+    <Disclosure as="nav" className="fixed top-0 left-0 w-full z-50 bg-white dark:bg-gradient-to-br dark:from-[#181c2a] dark:via-[#23263a] dark:to-[#1a1d2b] shadow transition-colors">
       {({ open }) => (
         <>
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="flex h-16 justify-between">
               <div className="flex">
                 <div className="flex flex-shrink-0 items-center ml-4">
-                  <Link to="/">
+                  <Link to="/admin/dashboard">
                     <img
                       className="h-12 w-auto"
                       src="/Logo-MARR.png"
@@ -85,7 +65,7 @@ export default function Navbar() {
                   </Link>
                 </div>
                 <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                  {navigation.map((item) => (
+                  {adminNavigation.map((item) => (
                     <Link
                       key={item.name}
                       to={item.href}
@@ -102,16 +82,8 @@ export default function Navbar() {
                 </div>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:items-center gap-4">
-                {userRole !== 'admin' && (
-                    <Link
-                    to="/carrito"
-                    className="rounded-full bg-transparent p-1 text-marrGold hover:text-marrGold focus:outline-none focus:ring-2 focus:ring-marrGold focus:ring-offset-2 transition-colors"
-                    >
-                    <ShoppingCartIcon className="h-6 w-6" aria-hidden="true" />
-                    </Link>
-                )}
                 <button
-                  onClick={toggleDarkMode}
+                  onClick={() => setDarkMode(!darkMode)}
                   className="rounded-full p-2 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-marrGold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                   title={darkMode ? 'Modo claro' : 'Modo oscuro'}
                 >
@@ -121,14 +93,7 @@ export default function Navbar() {
                     <MoonIcon className="h-6 w-6" />
                   )}
                 </button>
-                {!isAuthenticated ? (
-                  <button
-                    onClick={() => navigate('/iniciar-sesion')}
-                    className="ml-4 px-4 py-2 bg-[#bfa14a] text-white rounded-md hover:bg-[#a88c32] transition-colors duration-200 shadow"
-                  >
-                    Iniciar sesión
-                  </button>
-                ) : (
+                {isAuthenticated && (
                   <Menu as="div" className="relative ml-3">
                     <div>
                       <Menu.Button className="flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
@@ -149,42 +114,14 @@ export default function Navbar() {
                       leaveFrom="transform opacity-100 scale-100"
                       leaveTo="transform opacity-0 scale-95"
                     >
-                      <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-gray-800 dark:text-white">
-                        
-                        {userRole === 'admin' ? (
-                            <Menu.Item>
-                                {({ active }) => (
-                                    <Link to="/admin/dashboard" className={classNames(active ? 'bg-gray-100 dark:bg-gray-700' : '', 'block px-4 py-2 text-sm text-gray-700 dark:text-gray-200')}>
-                                        Dashboard
-                                    </Link>
-                                )}
-                            </Menu.Item>
-                        ) : (
-                            <>
-                                <Menu.Item>
-                                {({ active }) => (
-                                    <Link to="/perfil" className={classNames(active ? 'bg-gray-100 dark:bg-gray-700' : '', 'block px-4 py-2 text-sm text-gray-700 dark:text-gray-200')}>
-                                    Tu Perfil
-                                    </Link>
-                                )}
-                                </Menu.Item>
-                                <Menu.Item>
-                                {({ active }) => (
-                                    <Link to="/mis-pedidos" className={classNames(active ? 'bg-gray-100 dark:bg-gray-700' : '', 'block px-4 py-2 text-sm text-gray-700 dark:text-gray-200')}>
-                                    Mis Pedidos
-                                    </Link>
-                                )}
-                                </Menu.Item>
-                            </>
-                        )}
-                        
+                      <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                         <Menu.Item>
                           {({ active }) => (
                             <button
                               onClick={handleLogout}
                               className={classNames(
-                                active ? 'bg-gray-100 dark:bg-gray-700' : '',
-                                'block w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-200'
+                                active ? 'bg-gray-100' : '',
+                                'block w-full px-4 py-2 text-left text-sm text-gray-700'
                               )}
                             >
                               Cerrar Sesión
@@ -211,7 +148,7 @@ export default function Navbar() {
 
           <Disclosure.Panel className="sm:hidden">
             <div className="space-y-1 pb-3 pt-2">
-              {navigation.map((item) => (
+              {adminNavigation.map((item) => (
                 <Disclosure.Button
                   key={item.name}
                   as={Link}
@@ -228,16 +165,7 @@ export default function Navbar() {
               ))}
             </div>
             <div className="border-t border-gray-200 pb-3 pt-4">
-              {!isAuthenticated ? (
-                <div className="flex items-center px-4">
-                  <button
-                    onClick={() => navigate('/iniciar-sesion')}
-                    className="w-full px-4 py-2 bg-marrGold text-white rounded-md hover:bg-marrGold/80 transition-colors duration-200 shadow"
-                  >
-                    Iniciar sesión
-                  </button>
-                </div>
-              ) : (
+              {isAuthenticated && (
                 <div className="flex items-center px-4">
                   <img
                     className="h-10 w-10 rounded-full"
@@ -245,29 +173,12 @@ export default function Navbar() {
                     alt=""
                   />
                   <div className="ml-3">
-                    <div className="text-base font-medium text-marrGold">Usuario</div>
+                    <div className="text-base font-medium text-marrGold">Administrador</div>
                   </div>
                 </div>
               )}
               {isAuthenticated && (
                 <div className="mt-3 space-y-1">
-
-                {userRole === 'admin' ? (
-                    <Disclosure.Button as={Link} to="/admin/dashboard" className="block px-4 py-2 text-base font-medium text-marrGold hover:bg-marrGold/10 hover:text-marrGold">
-                        Dashboard
-                    </Disclosure.Button>
-                ): (
-                    <>
-                        <Disclosure.Button as={Link} to="/perfil" className="block px-4 py-2 text-base font-medium text-marrGold hover:bg-marrGold/10 hover:text-marrGold">
-                            Tu Perfil
-                        </Disclosure.Button>
-                        <Disclosure.Button as={Link} to="/mis-pedidos" className="block px-4 py-2 text-base font-medium text-marrGold hover:bg-marrGold/10 hover:text-marrGold">
-                            Mis Pedidos
-                        </Disclosure.Button>
-                    </>
-                )}
-
-
                   <Disclosure.Button
                     as="button"
                     onClick={handleLogout}

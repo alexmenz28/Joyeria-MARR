@@ -28,8 +28,8 @@ const App: React.FC = () => {
           <Routes>
             {/* Rutas Públicas */}
             <Route path="/" element={<Home />} />
-            <Route path="/catalog" element={<Catalog />} />
-            <Route path="/catalog/:id" element={<ProductDetail />} />
+            <Route path="/catalogo" element={<Catalog />} />
+            <Route path="/catalogo/:id" element={<ProductDetail />} />
             <Route path="/custom-order" element={<CustomOrder />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/login" element={<Login />} />

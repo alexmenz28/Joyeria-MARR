@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../utils/api';
 import { Producto } from '../../types';
+import AdminNavbar from '../../components/layout/AdminNavbar';
 
 const ProductManagement = () => {
   const [productos, setProductos] = useState<Producto[]>([]);
@@ -17,6 +18,7 @@ const ProductManagement = () => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
 
   const fetchProducts = async () => {
     try {
@@ -125,209 +127,226 @@ const ProductManagement = () => {
     setError(null);
   };
 
+  // Filtro de productos por nombre o categoría
+  const productosFiltrados = productos.filter((p) =>
+    p.nombre.toLowerCase().includes(search.toLowerCase()) ||
+    p.categoria.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
-    <div className="w-full px-4 pt-8 bg-white dark:bg-gray-900 min-h-screen transition-colors">
-      <h2 className="text-3xl font-bold text-center mb-8 text-marrGold">Gestión de Productos</h2>
-
-      <div className="mb-8 text-center">
-        <button
-          onClick={() => {
-            setIsEditing(false);
-            handleCloseModal();
-            setIsModalOpen(true);
-          }}
-          className="bg-primary-600 text-white px-6 py-3 rounded-lg shadow-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-        >
-          Registrar Nuevo Producto
-        </button>
-      </div>
-
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
-          {error}
-        </div>
-      )}
-
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white dark:bg-gray-800 shadow-md dark:shadow-lg rounded-lg overflow-hidden transition-colors">
-          <thead className="bg-gray-100 dark:bg-gray-700">
-            <tr>
-              <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">ID</th>
-              <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Nombre</th>
-              <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Categoría</th>
-              <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Precio</th>
-              <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Stock</th>
-              <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Imagen</th>
-              <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-            {productos.map((producto) => (
-              <tr key={producto.id}>
-                <td className="py-4 px-6 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{producto.id}</td>
-                <td className="py-4 px-6 whitespace-nowrap text-sm text-gray-500 dark:text-gray-200">{producto.nombre}</td>
-                <td className="py-4 px-6 whitespace-nowrap text-sm text-gray-500 dark:text-gray-200">{producto.categoria}</td>
-                <td className="py-4 px-6 whitespace-nowrap text-sm text-gray-500 dark:text-gray-200">${producto.precio.toFixed(2)}</td>
-                <td className="py-4 px-6 whitespace-nowrap text-sm text-gray-500 dark:text-gray-200">{producto.stock}</td>
-                <td className="py-4 px-6 whitespace-nowrap text-sm text-gray-500 dark:text-gray-200">
-                  {producto.imagenUrl && producto.imagenUrl.length > 0 ? (
-                    <img src={producto.imagenUrl} alt={producto.nombre} className="h-12 w-12 object-cover rounded-full" />
-                  ) : (
-                    <span className="text-gray-400">Sin imagen</span>
-                  )}
-                </td>
-                <td className="py-4 px-6 whitespace-nowrap text-right text-sm font-medium">
-                  <button
-                    onClick={() => handleEdit(producto)}
-                    className="text-indigo-600 hover:text-indigo-900 mr-4"
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => handleDelete(producto.id)}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    Eliminar
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto relative shadow-2xl border border-gray-200 dark:border-gray-700 transition-colors p-6 md:p-8">
+    <>
+      <AdminNavbar />
+      <div className="w-full px-4 pt-24 bg-white dark:bg-gray-900 min-h-screen transition-colors">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
+          <h2 className="text-3xl font-bold text-marrGold drop-shadow">Gestión de Productos</h2>
+          <div className="flex gap-2 w-full md:w-auto">
+            <input
+              type="text"
+              placeholder="Buscar por nombre o categoría..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="px-4 py-2 rounded-lg border border-marrGold focus:outline-none focus:ring-2 focus:ring-marrGold bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 w-full md:w-64 shadow"
+            />
             <button
-              onClick={handleCloseModal}
-              className="absolute top-3 right-3 text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white text-2xl font-bold focus:outline-none"
-              aria-label="Cerrar"
+              onClick={() => {
+                setIsEditing(false);
+                handleCloseModal();
+                setIsModalOpen(true);
+              }}
+              className="bg-marrGold text-white px-6 py-2 rounded-lg shadow-lg hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-marrGold font-semibold text-base transition-all duration-200"
             >
-              &times;
+              Registrar Nuevo Producto
             </button>
-            <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100 flex items-center gap-2">
-              {isEditing ? 'Editar Producto' : 'Nuevo Producto'}
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label htmlFor="nombre" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                  Nombre
-                </label>
-                <input
-                  type="text"
-                  id="nombre"
-                  className="mt-1 block w-full border border-gray-300 dark:border-gray-700 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                  value={currentProducto.nombre || ''}
-                  onChange={(e) => setCurrentProducto({ ...currentProducto, nombre: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="descripcion" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                  Descripción
-                </label>
-                <textarea
-                  id="descripcion"
-                  rows={3}
-                  className="mt-1 block w-full border border-gray-300 dark:border-gray-700 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                  value={currentProducto.descripcion || ''}
-                  onChange={(e) => setCurrentProducto({ ...currentProducto, descripcion: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          </div>
+        </div>
+
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 max-w-xl mx-auto shadow">
+            {error}
+          </div>
+        )}
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white dark:bg-gray-800 shadow-xl rounded-lg overflow-hidden transition-colors">
+            <thead className="bg-gray-100 dark:bg-gray-700">
+              <tr>
+                <th className="py-3 px-6 text-left text-xs font-bold text-marrGold uppercase tracking-wider">ID</th>
+                <th className="py-3 px-6 text-left text-xs font-bold text-marrGold uppercase tracking-wider">Nombre</th>
+                <th className="py-3 px-6 text-left text-xs font-bold text-marrGold uppercase tracking-wider">Categoría</th>
+                <th className="py-3 px-6 text-left text-xs font-bold text-marrGold uppercase tracking-wider">Precio</th>
+                <th className="py-3 px-6 text-left text-xs font-bold text-marrGold uppercase tracking-wider">Stock</th>
+                <th className="py-3 px-6 text-left text-xs font-bold text-marrGold uppercase tracking-wider">Imagen</th>
+                <th className="py-3 px-6 text-left text-xs font-bold text-marrGold uppercase tracking-wider">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              {productosFiltrados.map((producto) => (
+                <tr key={producto.id} className="hover:bg-marrGold/10 dark:hover:bg-marrGold/10 transition-colors">
+                  <td className="py-4 px-6 whitespace-nowrap text-sm font-bold text-marrGold">{producto.id}</td>
+                  <td className="py-4 px-6 whitespace-nowrap text-base text-gray-900 dark:text-gray-100 font-semibold">{producto.nombre}</td>
+                  <td className="py-4 px-6 whitespace-nowrap text-base text-gray-700 dark:text-gray-200">{producto.categoria}</td>
+                  <td className="py-4 px-6 whitespace-nowrap text-base text-gray-700 dark:text-gray-200">${producto.precio.toFixed(2)}</td>
+                  <td className="py-4 px-6 whitespace-nowrap text-base text-gray-700 dark:text-gray-200">{producto.stock}</td>
+                  <td className="py-4 px-6 whitespace-nowrap text-base text-gray-700 dark:text-gray-200">
+                    {producto.imagenUrl && producto.imagenUrl.length > 0 ? (
+                      <img src={producto.imagenUrl} alt={producto.nombre} className="h-14 w-14 object-cover rounded-full border-2 border-marrGold shadow" />
+                    ) : (
+                      <span className="text-gray-400">Sin imagen</span>
+                    )}
+                  </td>
+                  <td className="py-4 px-6 whitespace-nowrap text-right text-base font-medium flex gap-2 justify-end">
+                    <button
+                      onClick={() => handleEdit(producto)}
+                      className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition-colors shadow"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => handleDelete(producto.id)}
+                      className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors shadow"
+                    >
+                      Eliminar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {isModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto relative shadow-2xl border border-gray-200 dark:border-gray-700 transition-colors p-6 md:p-8">
+              <button
+                onClick={handleCloseModal}
+                className="absolute top-3 right-3 text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white text-2xl font-bold focus:outline-none"
+                aria-label="Cerrar"
+              >
+                &times;
+              </button>
+              <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                {isEditing ? 'Editar Producto' : 'Nuevo Producto'}
+              </h2>
+              <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
-                  <label htmlFor="precio" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                    Precio
-                  </label>
-                  <input
-                    type="number"
-                    id="precio"
-                    step="0.01"
-                    className="mt-1 block w-full border border-gray-300 dark:border-gray-700 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                    value={currentProducto.precio || 0}
-                    onChange={(e) => setCurrentProducto({ ...currentProducto, precio: Number(e.target.value) })}
-                    required
-                  />
-                </div>
-                <div>
-                  <label htmlFor="categoria" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                    Categoría
+                  <label htmlFor="nombre" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    Nombre
                   </label>
                   <input
                     type="text"
-                    id="categoria"
+                    id="nombre"
                     className="mt-1 block w-full border border-gray-300 dark:border-gray-700 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                    value={currentProducto.categoria || ''}
-                    onChange={(e) => setCurrentProducto({ ...currentProducto, categoria: e.target.value })}
+                    value={currentProducto.nombre || ''}
+                    onChange={(e) => setCurrentProducto({ ...currentProducto, nombre: e.target.value })}
                     required
                   />
                 </div>
                 <div>
-                  <label htmlFor="stock" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                    Stock
+                  <label htmlFor="descripcion" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    Descripción
                   </label>
-                  <input
-                    type="number"
-                    id="stock"
+                  <textarea
+                    id="descripcion"
+                    rows={3}
                     className="mt-1 block w-full border border-gray-300 dark:border-gray-700 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                    value={currentProducto.stock || 0}
-                    onChange={(e) => setCurrentProducto({ ...currentProducto, stock: Number(e.target.value) })}
+                    value={currentProducto.descripcion || ''}
+                    onChange={(e) => setCurrentProducto({ ...currentProducto, descripcion: e.target.value })}
                     required
                   />
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                  Imagen
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="mt-1 block w-full text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md"
-                />
-                {currentImageUrl && currentImageUrl.length > 0 ? (
-                  <div className="mt-2">
-                    <p className="text-sm text-gray-500 dark:text-gray-300">Imagen actual:</p>
-                    <img
-                      src={currentImageUrl}
-                      alt="Imagen actual"
-                      className="mt-1 h-32 w-32 object-cover rounded shadow-md border border-gray-200 dark:border-gray-700"
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="precio" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                      Precio
+                    </label>
+                    <input
+                      type="number"
+                      id="precio"
+                      step="0.01"
+                      className="mt-1 block w-full border border-gray-300 dark:border-gray-700 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                      value={currentProducto.precio || 0}
+                      onChange={(e) => setCurrentProducto({ ...currentProducto, precio: Number(e.target.value) })}
+                      required
                     />
                   </div>
-                ) : (
-                  isEditing && <p className="mt-2 text-sm text-gray-500 dark:text-gray-300">No hay imagen actual seleccionada.</p>
-                )}
-              </div>
-              {error && (
-                <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 px-4 py-3 rounded relative">
-                  <strong className="font-bold">Error: </strong>
-                  <span className="block sm:inline">{error}</span>
+                  <div>
+                    <label htmlFor="categoria" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                      Categoría
+                    </label>
+                    <input
+                      type="text"
+                      id="categoria"
+                      className="mt-1 block w-full border border-gray-300 dark:border-gray-700 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                      value={currentProducto.categoria || ''}
+                      onChange={(e) => setCurrentProducto({ ...currentProducto, categoria: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="stock" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                      Stock
+                    </label>
+                    <input
+                      type="number"
+                      id="stock"
+                      className="mt-1 block w-full border border-gray-300 dark:border-gray-700 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                      value={currentProducto.stock || 0}
+                      onChange={(e) => setCurrentProducto({ ...currentProducto, stock: Number(e.target.value) })}
+                      required
+                    />
+                  </div>
                 </div>
-              )}
-              <div className="flex justify-end space-x-4 mt-6">
-                <button
-                  type="button"
-                  onClick={handleCloseModal}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 shadow-md"
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Guardando...' : isEditing ? 'Actualizar' : 'Crear'}
-                </button>
-              </div>
-            </form>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    Imagen
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="mt-1 block w-full text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md"
+                  />
+                  {currentImageUrl && currentImageUrl.length > 0 ? (
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-500 dark:text-gray-300">Imagen actual:</p>
+                      <img
+                        src={currentImageUrl}
+                        alt="Imagen actual"
+                        className="mt-1 h-32 w-32 object-cover rounded shadow-md border border-gray-200 dark:border-gray-700"
+                      />
+                    </div>
+                  ) : (
+                    isEditing && <p className="mt-2 text-sm text-gray-500 dark:text-gray-300">No hay imagen actual seleccionada.</p>
+                  )}
+                </div>
+                {error && (
+                  <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 px-4 py-3 rounded relative">
+                    <strong className="font-bold">Error: </strong>
+                    <span className="block sm:inline">{error}</span>
+                  </div>
+                )}
+                <div className="flex justify-end space-x-4 mt-6">
+                  <button
+                    type="button"
+                    onClick={handleCloseModal}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 shadow-md"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Guardando...' : isEditing ? 'Actualizar' : 'Crear'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </>
   );
 };
 

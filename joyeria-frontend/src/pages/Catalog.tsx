@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import api from '../utils/api';
 import ProductoCard from '../components/productos/ProductoCard';
+import { Helmet } from 'react-helmet-async';
+import { Search, ChevronDown, Check } from 'lucide-react';
 
 interface Producto {
   id: number;
@@ -11,6 +13,7 @@ interface Producto {
   imagenUrl?: string;
   cantidadDisponible: number;
   disponible?: boolean;
+  stock: number;
 }
 
 const Catalog = () => {
@@ -79,7 +82,11 @@ const Catalog = () => {
   }, [productos, search, categoria, precioMin, precioMax, soloDisponibles, orden]);
 
   if (loading) {
-    return <div className="text-center text-lg mt-10">Cargando productos...</div>;
+    return (
+      <div className="w-full flex items-center justify-center min-h-screen bg-white dark:bg-gray-900">
+        <span className="text-marrGold text-lg animate-pulse">Cargando productos...</span>
+      </div>
+    );
   }
 
   if (error) {
@@ -87,103 +94,147 @@ const Catalog = () => {
   }
 
   return (
-    <div className="w-full px-4 pt-8 bg-white dark:bg-gray-900 min-h-screen transition-colors">
-      <h2 className="text-3xl font-bold text-center mb-8 mt-8 text-marrGold">
-        Nuestro Catálogo de Joyería
-      </h2>
-      {/* Filtros */}
-      <div className="mb-8 flex flex-col md:flex-row md:items-end md:space-x-4 gap-4 bg-marrGold/10 border border-marrGold rounded-lg p-4 shadow-sm dark:shadow-md">
-        <div className="flex-1">
-          <label className="block text-sm font-medium text-marrGold mb-1">Buscar</label>
-          <input
-            type="text"
-            className="w-full rounded-md border-marrGold bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-marrGold focus:border-marrGold"
-            placeholder="Nombre o descripción..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
+    <div className="min-h-full font-sans flex flex-col">
+      <Helmet>
+        <title>Catálogo - Joyería MARR</title>
+      </Helmet>
+
+      {/* HERO DEL CATÁLOGO */}
+      <section className="relative h-64 md:h-80 flex items-center justify-center bg-gradient-to-br from-yellow-100 via-white to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 overflow-hidden mb-10">
+        <img src="/Logo-MARR.png" alt="Catálogo de joyas" className="absolute inset-0 w-full h-full object-cover opacity-10" />
+        <div className="relative z-10 text-center">
+          <h2 className="text-4xl md:text-5xl font-extrabold text-marrGold drop-shadow mb-2 tracking-wide">Catálogo de Joyería</h2>
+          <p className="text-lg md:text-xl text-gray-800 dark:text-gray-100">Descubre piezas únicas y exclusivas para cada ocasión</p>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-marrGold mb-1">Categoría</label>
-          <select
-            className="w-full rounded-md border-marrGold bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-marrGold focus:border-marrGold"
-            value={categoria}
-            onChange={e => setCategoria(e.target.value)}
-          >
-            <option value="">Todas</option>
-            {categorias.map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
+      </section>
+
+      {/* FILTROS REDISEÑADOS */}
+      <section className="w-full flex justify-center mb-12">
+        <form className="flex flex-wrap gap-4 bg-white/90 dark:bg-gray-800/90 rounded-2xl shadow-xl px-6 py-4 border border-marrGold max-w-5xl w-full items-end">
+          {/* Buscar */}
+          <div className="flex flex-col flex-1 min-w-[180px]">
+            <label className="text-xs font-semibold text-marrGold mb-1 pl-1">Buscar</label>
+            <div className="relative">
+              <input
+                type="text"
+                className="w-full rounded-lg border border-marrGold bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-marrGold focus:border-marrGold pl-10 pr-4 py-2 text-base"
+                placeholder="Buscar joya, colección..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-marrGold">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z" />
+                </svg>
+              </span>
+            </div>
+          </div>
+          {/* Categoría */}
+          <div className="flex flex-col min-w-[140px]">
+            <label className="text-xs font-semibold text-marrGold mb-1 pl-1">Categoría</label>
+            <select
+              className="w-full rounded-lg border border-marrGold bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-marrGold focus:border-marrGold py-2 px-3"
+              value={categoria}
+              onChange={e => setCategoria(e.target.value)}
+            >
+              <option value="">Todas</option>
+              {categorias.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
+          {/* Precio mínimo */}
+          <div className="flex flex-col min-w-[110px]">
+            <label className="text-xs font-semibold text-marrGold mb-1 pl-1">Precio mínimo</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-marrGold">$</span>
+              <input
+                type="number"
+                min="0"
+                className="w-full rounded-lg border border-marrGold bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-marrGold focus:border-marrGold pl-7 pr-2 py-2"
+                value={precioMin}
+                onChange={e => setPrecioMin(e.target.value)}
+                placeholder="0"
+              />
+            </div>
+          </div>
+          {/* Precio máximo */}
+          <div className="flex flex-col min-w-[110px]">
+            <label className="text-xs font-semibold text-marrGold mb-1 pl-1">Precio máximo</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-marrGold">$</span>
+              <input
+                type="number"
+                min="0"
+                className="w-full rounded-lg border border-marrGold bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-marrGold focus:border-marrGold pl-7 pr-2 py-2"
+                value={precioMax}
+                onChange={e => setPrecioMax(e.target.value)}
+                placeholder="0"
+              />
+            </div>
+          </div>
+          {/* Ordenar por */}
+          <div className="flex flex-col min-w-[150px]">
+            <label className="text-xs font-semibold text-marrGold mb-1 pl-1">Ordenar por</label>
+            <select
+              className="w-full rounded-lg border border-marrGold bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-marrGold focus:border-marrGold py-2 px-3"
+              value={orden}
+              onChange={e => setOrden(e.target.value)}
+            >
+              <option value="relevancia">Relevancia</option>
+              <option value="precio-asc">Precio: menor a mayor</option>
+              <option value="precio-desc">Precio: mayor a menor</option>
+              <option value="nombre-asc">Nombre: A-Z</option>
+              <option value="nombre-desc">Nombre: Z-A</option>
+              <option value="reciente">Más reciente</option>
+            </select>
+          </div>
+          {/* Solo disponibles */}
+          <div className="flex flex-col items-center justify-end min-w-[120px]">
+            <label className="text-xs font-semibold text-marrGold mb-1 pl-1">&nbsp;</label>
+            <div className="flex items-center gap-2">
+              <input
+                id="disponibles"
+                type="checkbox"
+                className="h-5 w-5 text-marrGold focus:ring-marrGold border-marrGold rounded bg-white dark:bg-gray-900"
+                checked={soloDisponibles}
+                onChange={e => setSoloDisponibles(e.target.checked)}
+              />
+              <label htmlFor="disponibles" className="block text-sm text-marrGold select-none cursor-pointer">
+                Solo disponibles
+              </label>
+            </div>
+          </div>
+        </form>
+      </section>
+      {/* FIN FILTROS REDISEÑADOS */}
+
+      {/* PRODUCTOS */}
+      <div className="max-w-6xl mx-auto flex-1">
+        {productosFiltrados.length === 0 ? (
+          <div className="text-center text-gray-300 py-20 text-lg">No hay productos que coincidan con los filtros.</div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+            {productosFiltrados.map((producto) => (
+              <ProductoCard
+                key={producto.id}
+                id={producto.id}
+                nombre={producto.nombre}
+                descripcion={producto.descripcion}
+                precio={producto.precio}
+                imagenUrl={producto.imagenUrl}
+                categoria={producto.categoria}
+              />
             ))}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-marrGold mb-1">Precio mínimo</label>
-          <input
-            type="number"
-            min="0"
-            className="w-full rounded-md border-marrGold bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-marrGold focus:border-marrGold"
-            value={precioMin}
-            onChange={e => setPrecioMin(e.target.value)}
-            placeholder="$"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-marrGold mb-1">Precio máximo</label>
-          <input
-            type="number"
-            min="0"
-            className="w-full rounded-md border-marrGold bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-marrGold focus:border-marrGold"
-            value={precioMax}
-            onChange={e => setPrecioMax(e.target.value)}
-            placeholder="$"
-          />
-        </div>
-        <div className="flex items-center mt-6 md:mt-0">
-          <input
-            id="disponibles"
-            type="checkbox"
-            className="h-4 w-4 text-marrGold focus:ring-marrGold border-marrGold rounded"
-            checked={soloDisponibles}
-            onChange={e => setSoloDisponibles(e.target.checked)}
-          />
-          <label htmlFor="disponibles" className="ml-2 block text-sm text-marrGold">
-            Solo disponibles
-          </label>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-marrGold mb-1">Ordenar por</label>
-          <select
-            className="w-full rounded-md border-marrGold bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-marrGold focus:border-marrGold"
-            value={orden}
-            onChange={e => setOrden(e.target.value)}
-          >
-            <option value="relevancia">Relevancia</option>
-            <option value="precio-asc">Precio: menor a mayor</option>
-            <option value="precio-desc">Precio: mayor a menor</option>
-            <option value="nombre-asc">Nombre: A-Z</option>
-            <option value="nombre-desc">Nombre: Z-A</option>
-            <option value="reciente">Más reciente</option>
-          </select>
-        </div>
+          </div>
+        )}
       </div>
-      {/* Fin filtros */}
-      {productosFiltrados.length === 0 ? (
-        <p className="text-center text-gray-600 dark:text-gray-300">No hay productos que coincidan con los filtros.</p>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {productosFiltrados.map((producto) => (
-            <ProductoCard
-              key={producto.id}
-              id={producto.id}
-              nombre={producto.nombre}
-              descripcion={producto.descripcion}
-              precio={producto.precio}
-              imagenUrl={producto.imagenUrl}
-              categoria={producto.categoria}
-            />
-          ))}
-        </div>
-      )}
+
+      {/* LLAMADA A LA ACCIÓN */}
+      <section className="max-w-4xl mx-auto text-center mt-16 mb-0 pb-8">
+        <h3 className="text-2xl font-semibold text-marrGold mb-2">¿Buscas algo único?</h3>
+        <a href="/customorder" className="inline-block bg-marrGold text-white px-8 py-3 rounded-full shadow-lg hover:bg-yellow-600 transition text-lg font-semibold">Personaliza tu joya</a>
+      </section>
     </div>
   );
 };

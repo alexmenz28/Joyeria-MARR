@@ -1,104 +1,70 @@
 # Joyería MARR - Sistema de Gestión
 
-Sistema completo de gestión para joyería, desarrollado con ASP.NET Core y React.
+Sistema de gestión para joyería: backend en ASP.NET Core y frontend en React.
 
-## Estructura del Proyecto
+## Estructura del proyecto
 
 ```
-📦 joyeria-backend/     # Backend en ASP.NET Core
-📦 joyeria-frontend/    # Frontend en React + Tailwind
+joyeria-backend/     Backend API (ASP.NET Core, EF Core, SQL Server)
+joyeria-frontend/   SPA (React, Tailwind CSS)
 ```
 
-## Requisitos Previos
+## Requisitos
 
-- .NET 6 SDK o superior
-- Node.js 16.x o superior
+- .NET 9 SDK o superior
+- Node.js 18.x o superior
 - SQL Server
-- Visual Studio 2022 o Visual Studio Code
-- Cuenta en Cloudinary (para almacenamiento de imágenes)
+- Cuenta en Cloudinary (imágenes)
 
-## Configuración del Backend
-
-1. Navegar al directorio del backend:
-   ```bash
-   cd joyeria-backend
-   ```
-
-2. Restaurar las dependencias:
-   ```bash
-   dotnet restore
-   ```
-
-3. Configurar la base de datos:
-   - Actualizar la cadena de conexión en `appsettings.json`
-   - Ejecutar las migraciones:
-     ```bash
-     dotnet ef migrations add InitialCreate
-     dotnet ef database update
-     ```
-
-4. Configurar Cloudinary:
-   - Actualizar las credenciales en `appsettings.json`
-
-5. Ejecutar el proyecto:
-   ```bash
-   dotnet run
-   ```
-
-## Configuración del Frontend
-
-1. Navegar al directorio del frontend:
-   ```bash
-   cd joyeria-frontend
-   ```
-
-2. Instalar dependencias:
-   ```bash
-   npm install
-   ```
-
-3. Configurar variables de entorno:
-   - Crear archivo `.env` basado en `.env.example`
-   - Actualizar las variables según sea necesario
-
-4. Ejecutar el proyecto:
-   ```bash
-   npm start
-   ```
-
-## Características Principales
+## Cómo ejecutarlo
 
 ### Backend
-- API RESTful con ASP.NET Core
-- Autenticación JWT
-- Entity Framework Core con SQL Server
-- Swagger para documentación
-- Manejo de imágenes con Cloudinary
-- Roles de usuario (Admin, Empleado, Cliente)
+
+```bash
+cd joyeria-backend
+dotnet restore
+```
+
+Configurar: copiar `appsettings.Example.json` como `appsettings.json` y rellenar cadena de conexión, JWT y Cloudinary. Luego:
+
+```bash
+dotnet ef database update
+dotnet run
+```
 
 ### Frontend
-- SPA con React
-- Diseño responsivo con Tailwind CSS
-- Rutas protegidas
-- Gestión de estado
-- Formularios validados
-- Carrito de compras
-- Panel de administración
 
-## Roles de Usuario
+```bash
+cd joyeria-frontend
+npm install
+```
 
-- **Admin**: Acceso total al sistema
-- **Empleado**: Gestión de productos y pedidos
-- **Cliente**: Catálogo y pedidos personalizados
+Copiar `.env.example` como `.env` y definir `REACT_APP_API_BASE_URL`. Luego:
+
+```bash
+npm start
+```
+
+## Características
+
+- **Backend:** API REST, autenticación JWT, Entity Framework Core con SQL Server, Swagger, Cloudinary, roles (Admin, Empleado, Cliente).
+- **Frontend:** React, Tailwind CSS, rutas protegidas, catálogo, carrito, panel de administración.
+
+## Roles
+
+| Rol      | Acceso |
+|----------|--------|
+| Admin    | Total  |
+| Empleado | Productos y pedidos |
+| Cliente  | Catálogo y pedidos personalizados |
 
 ## Contribución
 
-1. Fork el proyecto
-2. Crear una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abrir un Pull Request
+1. Fork del proyecto
+2. Rama para tu cambio (`git checkout -b feature/nombre`)
+3. Commit y push a tu rama
+4. Abrir Pull Request
 
 ## Licencia
 
-Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE.md](LICENSE.md) para más detalles. 
+MIT.

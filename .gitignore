@@ -6,6 +6,7 @@ joyeria-backend/*.suo
 joyeria-backend/*.userosscache
 joyeria-backend/*.sln.docstates
 joyeria-backend/.vs/
+joyeria-backend/appsettings.json
 joyeria-backend/appsettings.Development.json
 joyeria-backend/appsettings.Production.json
 
@@ -16,6 +17,7 @@ joyeria-frontend/.pnp.js
 joyeria-frontend/coverage/
 joyeria-frontend/build/
 joyeria-frontend/.DS_Store
+joyeria-frontend/.env
 joyeria-frontend/.env.local
 joyeria-frontend/.env.development.local
 joyeria-frontend/.env.test.local
@@ -30,6 +32,9 @@ joyeria-frontend/yarn-error.log*
 *.swp
 *.swo
 *~
+
+# Documentación interna (no subir al repo)
+analisis-proyecto/
 
 # Archivos del sistema
 .DS_Store

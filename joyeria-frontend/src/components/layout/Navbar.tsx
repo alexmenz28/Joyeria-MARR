@@ -3,20 +3,24 @@ import { Disclosure, Menu, Transition } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon, ShoppingCartIcon, MoonIcon, SunIcon } from '@heroicons/react/24/outline';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
+import useDarkMode from '../../hooks/useDarkMode';
+import { getJwtRole, isAdmin, isAdminOrEmployee } from '../../utils/jwtRole';
+import { useCart } from '../../context/CartContext';
 
 const userNavigation = [
-  { name: 'Inicio', href: '/' },
-  { name: 'Catálogo', href: '/catalogo' },
-  { name: 'Contacto', href: '/contacto' },
+  { name: 'Home', href: '/' },
+  { name: 'Catalog', href: '/catalog' },
+  { name: 'Custom order', href: '/custom-order' },
+  { name: 'Contact', href: '/contact' },
 ];
 
 const adminNavigation = [
-    { name: 'Dashboard', href: '/admin/dashboard' },
-    { name: 'Productos', href: '/admin/productos' },
-    { name: 'Pedidos', href: '/admin/pedidos' },
-    { name: 'Usuarios', href: '/admin/usuarios' },
-    { name: 'Ventas', href: '/admin/ventas' },
-]
+  { name: 'Dashboard', href: '/admin/dashboard' },
+  { name: 'Products', href: '/admin/products' },
+  { name: 'Orders', href: '/admin/orders' },
+  { name: 'Users', href: '/admin/users' },
+  { name: 'Sales', href: '/admin/sales' },
+];
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
@@ -25,17 +29,23 @@ function classNames(...classes: string[]) {
 export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { itemCount, cartToast } = useCart();
+  const [cartBadgePulse, setCartBadgePulse] = useState(0);
+
+  useEffect(() => {
+    if (cartToast?.kind === 'added') setCartBadgePulse((k) => k + 1);
+  }, [cartToast]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useDarkMode();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
       setIsAuthenticated(true);
       try {
-        const decoded: any = jwtDecode(token);
-        setUserRole(decoded.role);
+        const decoded = jwtDecode<Record<string, unknown>>(token);
+        setUserRole(getJwtRole(decoded) ?? null);
       } catch {
         setUserRole(null);
       }
@@ -45,13 +55,6 @@ export default function Navbar() {
     }
   }, [location]);
 
-  useEffect(() => {
-    // Detectar preferencia del usuario o del sistema
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    setDarkMode(prefersDark);
-    document.documentElement.classList.toggle('dark', prefersDark);
-  }, []);
-
   const handleLogout = () => {
     localStorage.removeItem('token');
     setIsAuthenticated(false);
@@ -59,17 +62,16 @@ export default function Navbar() {
     navigate('/');
   };
 
-  const toggleDarkMode = () => {
-    setDarkMode((prev) => {
-      document.documentElement.classList.toggle('dark', !prev);
-      return !prev;
-    });
-  };
-
-  const navigation = userRole === 'admin' ? adminNavigation : userNavigation;
+  const adminNavForUser = isAdmin(userRole ?? undefined)
+    ? adminNavigation
+    : adminNavigation.filter((item) => item.href !== '/admin/users');
+  const navigation = isAdminOrEmployee(userRole ?? undefined) ? adminNavForUser : userNavigation;
 
   return (
-    <Disclosure as="nav" className="sticky top-0 z-50 bg-white dark:bg-gradient-to-br dark:from-[#181c2a] dark:via-[#23263a] dark:to-[#1a1d2b] shadow transition-colors">
+    <Disclosure
+      as="nav"
+      className="sticky top-0 z-50 bg-ivory/95 dark:bg-gradient-to-br dark:from-night-900 dark:via-night-800 dark:to-night-900 backdrop-blur border-b border-gold-500/20 shadow-sm transition-colors"
+    >
       {({ open }) => (
         <>
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -80,7 +82,7 @@ export default function Navbar() {
                     <img
                       className="h-12 w-auto"
                       src="/Logo-MARR.png"
-                      alt="Joyeria Logo"
+                      alt="Joyeria MARR"
                     />
                   </Link>
                 </div>
@@ -102,37 +104,48 @@ export default function Navbar() {
                 </div>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:items-center gap-4">
-                {userRole !== 'admin' && (
-                    <Link
-                    to="/carrito"
-                    className="rounded-full bg-transparent p-1 text-marrGold hover:text-marrGold focus:outline-none focus:ring-2 focus:ring-marrGold focus:ring-offset-2 transition-colors"
-                    >
+                {!isAdminOrEmployee(userRole ?? undefined) && (
+                  <Link
+                    to="/cart"
+                    className="relative rounded-full bg-transparent p-1 text-marrGold hover:text-marrGold focus:outline-none focus:ring-2 focus:ring-marrGold focus:ring-offset-2 transition-colors"
+                    aria-label={`Shopping cart${itemCount > 0 ? `, ${itemCount} items` : ''}`}
+                  >
                     <ShoppingCartIcon className="h-6 w-6" aria-hidden="true" />
-                    </Link>
+                    {itemCount > 0 && (
+                      <span
+                        key={cartBadgePulse}
+                        className={`absolute -right-0.5 -top-0.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-gold-600 px-1 text-[11px] font-bold leading-none text-white ${cartBadgePulse > 0 ? 'animate-cart-badge-pulse' : ''}`}
+                      >
+                        {itemCount > 99 ? '99+' : itemCount}
+                      </span>
+                    )}
+                  </Link>
                 )}
                 <button
-                  onClick={toggleDarkMode}
-                  className="rounded-full p-2 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-marrGold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                  title={darkMode ? 'Modo claro' : 'Modo oscuro'}
+                  type="button"
+                  onClick={() => setDarkMode(!darkMode)}
+                  className="rounded-full p-2 bg-porcelain dark:bg-night-800 text-gray-700 dark:text-marrGold hover:bg-gold-50 dark:hover:bg-night-700 transition-colors duration-200"
+                  title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
                 >
                   {darkMode ? (
-                    <SunIcon className="h-6 w-6" />
+                    <SunIcon className="h-6 w-6" aria-hidden="true" />
                   ) : (
-                    <MoonIcon className="h-6 w-6" />
+                    <MoonIcon className="h-6 w-6" aria-hidden="true" />
                   )}
                 </button>
                 {!isAuthenticated ? (
                   <button
-                    onClick={() => navigate('/iniciar-sesion')}
-                    className="ml-4 px-4 py-2 bg-[#bfa14a] text-white rounded-md hover:bg-[#a88c32] transition-colors duration-200 shadow"
+                    type="button"
+                    onClick={() => navigate('/login')}
+                    className="ml-4 px-4 py-2 bg-gold-500 text-white rounded-full hover:bg-gold-600 transition-colors duration-200 shadow-md"
                   >
-                    Iniciar sesión
+                    Log in
                   </button>
                 ) : (
                   <Menu as="div" className="relative ml-3">
                     <div>
                       <Menu.Button className="flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
-                        <span className="sr-only">Abrir menú de usuario</span>
+                        <span className="sr-only">Open user menu</span>
                         <img
                           className="h-8 w-8 rounded-full"
                           src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
@@ -150,44 +163,43 @@ export default function Navbar() {
                       leaveTo="transform opacity-0 scale-95"
                     >
                       <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-gray-800 dark:text-white">
-                        
-                        {userRole === 'admin' ? (
-                            <Menu.Item>
-                                {({ active }) => (
-                                    <Link to="/admin/dashboard" className={classNames(active ? 'bg-gray-100 dark:bg-gray-700' : '', 'block px-4 py-2 text-sm text-gray-700 dark:text-gray-200')}>
-                                        Dashboard
-                                    </Link>
-                                )}
-                            </Menu.Item>
+                        {isAdminOrEmployee(userRole ?? undefined) ? (
+                          <Menu.Item>
+                            {({ active }) => (
+                              <Link to="/admin/dashboard" className={classNames(active ? 'bg-gray-100 dark:bg-gray-700' : '', 'block px-4 py-2 text-sm text-gray-700 dark:text-gray-200')}>
+                                Dashboard
+                              </Link>
+                            )}
+                          </Menu.Item>
                         ) : (
-                            <>
-                                <Menu.Item>
-                                {({ active }) => (
-                                    <Link to="/perfil" className={classNames(active ? 'bg-gray-100 dark:bg-gray-700' : '', 'block px-4 py-2 text-sm text-gray-700 dark:text-gray-200')}>
-                                    Tu Perfil
-                                    </Link>
-                                )}
-                                </Menu.Item>
-                                <Menu.Item>
-                                {({ active }) => (
-                                    <Link to="/mis-pedidos" className={classNames(active ? 'bg-gray-100 dark:bg-gray-700' : '', 'block px-4 py-2 text-sm text-gray-700 dark:text-gray-200')}>
-                                    Mis Pedidos
-                                    </Link>
-                                )}
-                                </Menu.Item>
-                            </>
+                          <>
+                            <Menu.Item>
+                              {({ active }) => (
+                                <Link to="/profile" className={classNames(active ? 'bg-gray-100 dark:bg-gray-700' : '', 'block px-4 py-2 text-sm text-gray-700 dark:text-gray-200')}>
+                                  Your profile
+                                </Link>
+                              )}
+                            </Menu.Item>
+                            <Menu.Item>
+                              {({ active }) => (
+                                <Link to="/orders" className={classNames(active ? 'bg-gray-100 dark:bg-gray-700' : '', 'block px-4 py-2 text-sm text-gray-700 dark:text-gray-200')}>
+                                  My orders
+                                </Link>
+                              )}
+                            </Menu.Item>
+                          </>
                         )}
-                        
                         <Menu.Item>
                           {({ active }) => (
                             <button
+                              type="button"
                               onClick={handleLogout}
                               className={classNames(
                                 active ? 'bg-gray-100 dark:bg-gray-700' : '',
                                 'block w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-200'
                               )}
                             >
-                              Cerrar Sesión
+                              Log out
                             </button>
                           )}
                         </Menu.Item>
@@ -196,9 +208,38 @@ export default function Navbar() {
                   </Menu>
                 )}
               </div>
-              <div className="-mr-2 flex items-center sm:hidden">
-                <Disclosure.Button className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500">
-                  <span className="sr-only">Abrir menú principal</span>
+              <div className="flex items-center gap-1 sm:hidden">
+                {!isAdminOrEmployee(userRole ?? undefined) && (
+                  <Link
+                    to="/cart"
+                    className="relative rounded-full p-2 text-marrGold/80 hover:text-marrGold hover:bg-gold-50 dark:hover:bg-night-700 transition-colors duration-200"
+                    aria-label="Cart"
+                  >
+                    <ShoppingCartIcon className="h-6 w-6" aria-hidden="true" />
+                    {itemCount > 0 && (
+                      <span
+                        key={cartBadgePulse}
+                        className={`absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold-600 px-0.5 text-[10px] font-bold text-white ${cartBadgePulse > 0 ? 'animate-cart-badge-pulse' : ''}`}
+                      >
+                        {itemCount > 9 ? '9+' : itemCount}
+                      </span>
+                    )}
+                  </Link>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setDarkMode(!darkMode)}
+                  className="rounded-full p-2 text-marrGold/80 hover:text-marrGold hover:bg-gold-50 dark:hover:bg-night-700 transition-colors duration-200"
+                  title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+                >
+                  {darkMode ? (
+                    <SunIcon className="h-6 w-6" aria-hidden="true" />
+                  ) : (
+                    <MoonIcon className="h-6 w-6" aria-hidden="true" />
+                  )}
+                </button>
+                <Disclosure.Button className="inline-flex items-center justify-center rounded-md p-2 text-marrGold/80 hover:bg-gold-50 dark:hover:bg-night-700 hover:text-marrGold focus:outline-none focus:ring-2 focus:ring-inset focus:ring-gold-500 transition-colors duration-200">
+                  <span className="sr-only">Open main menu</span>
                   {open ? (
                     <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
                   ) : (
@@ -209,8 +250,8 @@ export default function Navbar() {
             </div>
           </div>
 
-          <Disclosure.Panel className="sm:hidden">
-            <div className="space-y-1 pb-3 pt-2">
+          <Disclosure.Panel className="sm:hidden overflow-hidden transition-all duration-200 ease-out">
+            <div className="animate-mobile-menu-in space-y-1 pb-3 pt-2 bg-ivory/50 dark:bg-night-800/50">
               {navigation.map((item) => (
                 <Disclosure.Button
                   key={item.name}
@@ -231,10 +272,11 @@ export default function Navbar() {
               {!isAuthenticated ? (
                 <div className="flex items-center px-4">
                   <button
-                    onClick={() => navigate('/iniciar-sesion')}
+                    type="button"
+                    onClick={() => navigate('/login')}
                     className="w-full px-4 py-2 bg-marrGold text-white rounded-md hover:bg-marrGold/80 transition-colors duration-200 shadow"
                   >
-                    Iniciar sesión
+                    Log in
                   </button>
                 </div>
               ) : (
@@ -245,35 +287,33 @@ export default function Navbar() {
                     alt=""
                   />
                   <div className="ml-3">
-                    <div className="text-base font-medium text-marrGold">Usuario</div>
+                    <div className="text-base font-medium text-marrGold">Account</div>
                   </div>
                 </div>
               )}
               {isAuthenticated && (
                 <div className="mt-3 space-y-1">
-
-                {userRole === 'admin' ? (
+                  {isAdminOrEmployee(userRole ?? undefined) ? (
                     <Disclosure.Button as={Link} to="/admin/dashboard" className="block px-4 py-2 text-base font-medium text-marrGold hover:bg-marrGold/10 hover:text-marrGold">
-                        Dashboard
+                      Dashboard
                     </Disclosure.Button>
-                ): (
+                  ) : (
                     <>
-                        <Disclosure.Button as={Link} to="/perfil" className="block px-4 py-2 text-base font-medium text-marrGold hover:bg-marrGold/10 hover:text-marrGold">
-                            Tu Perfil
-                        </Disclosure.Button>
-                        <Disclosure.Button as={Link} to="/mis-pedidos" className="block px-4 py-2 text-base font-medium text-marrGold hover:bg-marrGold/10 hover:text-marrGold">
-                            Mis Pedidos
-                        </Disclosure.Button>
+                      <Disclosure.Button as={Link} to="/profile" className="block px-4 py-2 text-base font-medium text-marrGold hover:bg-marrGold/10 hover:text-marrGold">
+                        Your profile
+                      </Disclosure.Button>
+                      <Disclosure.Button as={Link} to="/orders" className="block px-4 py-2 text-base font-medium text-marrGold hover:bg-marrGold/10 hover:text-marrGold">
+                        My orders
+                      </Disclosure.Button>
                     </>
-                )}
-
-
+                  )}
                   <Disclosure.Button
                     as="button"
+                    type="button"
                     onClick={handleLogout}
                     className="block w-full px-4 py-2 text-left text-base font-medium text-marrGold hover:bg-marrGold/10 hover:text-marrGold"
                   >
-                    Cerrar Sesión
+                    Log out
                   </Disclosure.Button>
                 </div>
               )}
@@ -283,4 +323,4 @@ export default function Navbar() {
       )}
     </Disclosure>
   );
-} 
+}

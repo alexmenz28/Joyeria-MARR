@@ -1,0 +1,32 @@
+---
+description: Reglas de diseño y UI/UX del frontend Joyería MARR (paleta, espaciado, componentes, animaciones)
+globs: joyeria-frontend/**/*.tsx, joyeria-frontend/**/*.ts, joyeria-frontend/**/*.css, joyeria-frontend/tailwind.config.js
+alwaysApply: false
+---
+
+# Reglas de diseño - Joyería MARR
+
+Al modificar o crear pantallas en el frontend, respetar siempre lo siguiente. Documento completo: `docs/REGLAS-DISEÑO.md`.
+
+## Paleta y tema
+- **Modo claro:** fondo `bg-ivory` o `bg-white`; superficies con `border-gold-200/60`; acento `marrGold`, `gold-500`, `gold-600`.
+- **Modo oscuro:** fondo `bg-night-900`; superficies `bg-night-800` con `border-gold-500/20`; acento `gold-400`/`gold-500`.
+- **Persistencia del tema:** se usa `localStorage` (clave `darkMode`). No cambiar a cookies ni la clave; fallback a `prefers-color-scheme` si no hay valor guardado. Hook `useDarkMode`, clase `dark` en `<html>`.
+- Botones primarios: `bg-gold-500 hover:bg-gold-600 transition-all duration-200`. Enlaces: `text-gold-600 dark:text-gold-400` con hover suave.
+
+## Layout y espaciado
+- Contenedor: `max-w-5xl mx-auto px-6 md:px-8`. Secciones: `py-16` a `py-24`. Gaps: `gap-8` a `gap-10`. Mantener aire (estética minimalista/lujo).
+
+## Componentes
+- Cards: `bg-white dark:bg-night-800`, `border border-gold-200/60 dark:border-gold-500/20`, `rounded-2xl`, `shadow-lg`.
+- Inputs: `rounded-lg`, `border-gold-200 dark:border-gold-500/30`, `focus:ring-2 focus:ring-gold-500`, `transition-colors duration-200`.
+- Navegación interna: usar `<Link to="...">` de React Router (no `<a href>`).
+
+## Animaciones
+- Reveal al scroll: componente `RevealSection` con opcional `delay` (stagger) y `slow`. Hover en cards: `hover:-translate-y-1 hover:shadow-xl transition-all duration-200`. Respetar `prefers-reduced-motion`.
+
+## Rutas
+- Inicio `/`, Catálogo `/catalogo`, Login `/iniciar-sesion`, Registro `/registro`, Pedido personalizado `/pedido-personalizado`, Carrito `/carrito`, Contacto `/contacto`, Perfil `/perfil`, Mis pedidos `/mis-pedidos`, Producto `/producto/:id`.
+
+## Páginas sin navbar (Login, Registro)
+- Incluir "Volver al inicio" (`<Link to="/">`) debajo de "Regístrate aquí" / "Inicia sesión aquí", con `border-t border-gold-200/40 dark:border-gold-500/20`.

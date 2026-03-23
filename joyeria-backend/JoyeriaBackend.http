@@ -1,6 +1,106 @@
-@JoyeriaBackend_HostAddress = http://localhost:5052
+@JoyeriaBackend_HostAddress = http://localhost:5053
 
-GET {{JoyeriaBackend_HostAddress}}/weatherforecast/
+### List products (public) — paged JSON: items, totalCount, page, pageSize, totalPages
+GET {{JoyeriaBackend_HostAddress}}/api/products?page=1&pageSize=12&search=&sortBy=relevance
 Accept: application/json
+
+### Category names (filters)
+GET {{JoyeriaBackend_HostAddress}}/api/categories
+Accept: application/json
+
+### Admin dashboard stats (Admin / Employee)
+GET {{JoyeriaBackend_HostAddress}}/api/admin/stats
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Sales summary by month (Admin / Employee) — query: months=1..36, default 12
+GET {{JoyeriaBackend_HostAddress}}/api/admin/sales/summary?months=12
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Admin users — paged (Admin only)
+GET {{JoyeriaBackend_HostAddress}}/api/admin/users?page=1&pageSize=10&search=
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Admin roles dropdown (Admin only)
+GET {{JoyeriaBackend_HostAddress}}/api/admin/roles
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Patch user role / active (Admin only) — at least one of roleId, isActive
+PATCH {{JoyeriaBackend_HostAddress}}/api/admin/users/2
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "isActive": true
+}
+
+### Register (JSON body: name, email, password, confirmPassword)
+POST {{JoyeriaBackend_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Test User",
+  "email": "test@example.com",
+  "password": "Test123!",
+  "confirmPassword": "Test123!"
+}
+
+### Login
+POST {{JoyeriaBackend_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@joyeriamarr.com",
+  "password": "Test123!"
+}
+
+### My profile (any authenticated user)
+@token = YOUR_JWT_HERE
+GET {{JoyeriaBackend_HostAddress}}/api/account/me
+Authorization: Bearer {{token}}
+
+### My orders — paged (paste Bearer token from login response)
+GET {{JoyeriaBackend_HostAddress}}/api/orders/my?page=1&pageSize=10
+Authorization: Bearer {{token}}
+
+### All orders — Admin / Employee (paged)
+GET {{JoyeriaBackend_HostAddress}}/api/orders?page=1&pageSize=10&search=
+Authorization: Bearer {{token}}
+
+### Create order — Customer role only
+POST {{JoyeriaBackend_HostAddress}}/api/orders
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "notes": "Gift wrap please",
+  "lines": [
+    { "productId": 1, "quantity": 1 }
+  ]
+}
+
+### Create custom-line order — Customer (no productId; price 0 until quoted)
+POST {{JoyeriaBackend_HostAddress}}/api/orders
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "notes": "Budget up to $800",
+  "lines": [
+    { "quantity": 1, "customDescription": "Yellow gold ring, emerald, size 7" }
+  ]
+}
+
+### Update order status — Admin / Employee
+PATCH {{JoyeriaBackend_HostAddress}}/api/orders/1/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "In Progress"
+}
 
 ###

@@ -4,15 +4,16 @@ import { Bars3Icon, XMarkIcon, MoonIcon, SunIcon } from '@heroicons/react/24/out
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import useDarkMode from '../../hooks/useDarkMode';
+import { getJwtRole, isAdmin } from '../../utils/jwtRole';
 
-const adminNavigation = [
+const adminNavigationAll = [
   { name: 'Dashboard', href: '/admin/dashboard' },
-  { name: 'Productos', href: '/admin/productos' },
-  { name: 'Pedidos', href: '/admin/pedidos' },
-  { name: 'Usuarios', href: '/admin/usuarios' },
-  { name: 'Ventas', href: '/admin/ventas' },
-  { name: 'Ver Tienda', href: '/' },
-];
+  { name: 'Products', href: '/admin/products' },
+  { name: 'Orders', href: '/admin/orders' },
+  { name: 'Users', href: '/admin/users' },
+  { name: 'Sales', href: '/admin/sales' },
+  { name: 'View store', href: '/' },
+] as const;
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
@@ -22,34 +23,39 @@ export default function AdminNavbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
   const [darkMode, setDarkMode] = useDarkMode();
+  const [navItems, setNavItems] = useState<readonly { name: string; href: string }[]>(adminNavigationAll);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (token) {
-      setIsAuthenticated(true);
-      try {
-        const decoded: any = jwtDecode(token);
-        setUserRole(decoded.role);
-      } catch {
-        setUserRole(null);
-      }
-    } else {
-      setIsAuthenticated(false);
-      setUserRole(null);
+    setIsAuthenticated(!!token);
+    if (!token) {
+      setNavItems(adminNavigationAll);
+      return;
+    }
+    try {
+      const decoded = jwtDecode<Record<string, unknown>>(token);
+      const role = getJwtRole(decoded);
+      setNavItems(
+        isAdmin(role)
+          ? adminNavigationAll
+          : adminNavigationAll.filter((i) => i.href !== '/admin/users')
+      );
+    } catch {
+      setNavItems(adminNavigationAll);
     }
   }, [location]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    setIsAuthenticated(false);
-    setUserRole(null);
     navigate('/');
   };
 
   return (
-    <Disclosure as="nav" className="fixed top-0 left-0 w-full z-50 bg-white dark:bg-gradient-to-br dark:from-[#181c2a] dark:via-[#23263a] dark:to-[#1a1d2b] shadow transition-colors">
+    <Disclosure
+      as="nav"
+      className="fixed top-0 left-0 w-full z-50 bg-ivory/95 dark:bg-gradient-to-br dark:from-night-900 dark:via-night-800 dark:to-night-900 backdrop-blur border-b border-gold-500/20 shadow-sm transition-colors"
+    >
       {({ open }) => (
         <>
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -60,12 +66,12 @@ export default function AdminNavbar() {
                     <img
                       className="h-12 w-auto"
                       src="/Logo-MARR.png"
-                      alt="Joyeria Logo"
+                      alt="Joyeria MARR"
                     />
                   </Link>
                 </div>
                 <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                  {adminNavigation.map((item) => (
+                  {navItems.map((item) => (
                     <Link
                       key={item.name}
                       to={item.href}
@@ -83,9 +89,10 @@ export default function AdminNavbar() {
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:items-center gap-4">
                 <button
+                  type="button"
                   onClick={() => setDarkMode(!darkMode)}
-                  className="rounded-full p-2 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-marrGold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                  title={darkMode ? 'Modo claro' : 'Modo oscuro'}
+                  className="rounded-full p-2 bg-porcelain dark:bg-night-800 text-gray-700 dark:text-marrGold hover:bg-gold-50 dark:hover:bg-night-700 transition-colors"
+                  title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
                 >
                   {darkMode ? (
                     <SunIcon className="h-6 w-6" />
@@ -97,7 +104,7 @@ export default function AdminNavbar() {
                   <Menu as="div" className="relative ml-3">
                     <div>
                       <Menu.Button className="flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
-                        <span className="sr-only">Abrir menú de usuario</span>
+                        <span className="sr-only">Open user menu</span>
                         <img
                           className="h-8 w-8 rounded-full"
                           src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
@@ -118,13 +125,14 @@ export default function AdminNavbar() {
                         <Menu.Item>
                           {({ active }) => (
                             <button
+                              type="button"
                               onClick={handleLogout}
                               className={classNames(
                                 active ? 'bg-gray-100' : '',
                                 'block w-full px-4 py-2 text-left text-sm text-gray-700'
                               )}
                             >
-                              Cerrar Sesión
+                              Log out
                             </button>
                           )}
                         </Menu.Item>
@@ -133,9 +141,21 @@ export default function AdminNavbar() {
                   </Menu>
                 )}
               </div>
-              <div className="-mr-2 flex items-center sm:hidden">
-                <Disclosure.Button className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500">
-                  <span className="sr-only">Abrir menú principal</span>
+              <div className="flex items-center gap-1 sm:hidden">
+                <button
+                  type="button"
+                  onClick={() => setDarkMode(!darkMode)}
+                  className="rounded-full p-2 text-marrGold/80 hover:text-marrGold hover:bg-gold-50 dark:hover:bg-night-700 transition-colors duration-200"
+                  title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+                >
+                  {darkMode ? (
+                    <SunIcon className="h-6 w-6" aria-hidden="true" />
+                  ) : (
+                    <MoonIcon className="h-6 w-6" aria-hidden="true" />
+                  )}
+                </button>
+                <Disclosure.Button className="inline-flex items-center justify-center rounded-md p-2 text-marrGold/80 hover:bg-gold-50 dark:hover:bg-night-700 hover:text-marrGold focus:outline-none focus:ring-2 focus:ring-inset focus:ring-gold-500 transition-colors duration-200">
+                  <span className="sr-only">Open main menu</span>
                   {open ? (
                     <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
                   ) : (
@@ -146,9 +166,9 @@ export default function AdminNavbar() {
             </div>
           </div>
 
-          <Disclosure.Panel className="sm:hidden">
-            <div className="space-y-1 pb-3 pt-2">
-              {adminNavigation.map((item) => (
+          <Disclosure.Panel className="sm:hidden overflow-hidden transition-all duration-200 ease-out">
+            <div className="animate-mobile-menu-in space-y-1 pb-3 pt-2 bg-ivory/50 dark:bg-night-800/50">
+              {navItems.map((item) => (
                 <Disclosure.Button
                   key={item.name}
                   as={Link}
@@ -166,27 +186,28 @@ export default function AdminNavbar() {
             </div>
             <div className="border-t border-gray-200 pb-3 pt-4">
               {isAuthenticated && (
-                <div className="flex items-center px-4">
-                  <img
-                    className="h-10 w-10 rounded-full"
-                    src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                    alt=""
-                  />
-                  <div className="ml-3">
-                    <div className="text-base font-medium text-marrGold">Administrador</div>
+                <>
+                  <div className="flex items-center px-4">
+                    <img
+                      className="h-10 w-10 rounded-full"
+                      src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+                      alt=""
+                    />
+                    <div className="ml-3">
+                      <div className="text-base font-medium text-marrGold">Administrator</div>
+                    </div>
                   </div>
-                </div>
-              )}
-              {isAuthenticated && (
-                <div className="mt-3 space-y-1">
-                  <Disclosure.Button
-                    as="button"
-                    onClick={handleLogout}
-                    className="block w-full px-4 py-2 text-left text-base font-medium text-marrGold hover:bg-marrGold/10 hover:text-marrGold"
-                  >
-                    Cerrar Sesión
-                  </Disclosure.Button>
-                </div>
+                  <div className="mt-3 space-y-1">
+                    <Disclosure.Button
+                      as="button"
+                      type="button"
+                      onClick={handleLogout}
+                      className="block w-full px-4 py-2 text-left text-base font-medium text-marrGold hover:bg-marrGold/10 hover:text-marrGold"
+                    >
+                      Log out
+                    </Disclosure.Button>
+                  </div>
+                </>
               )}
             </div>
           </Disclosure.Panel>
@@ -194,4 +215,4 @@ export default function AdminNavbar() {
       )}
     </Disclosure>
   );
-} 
+}

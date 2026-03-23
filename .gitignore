@@ -29,6 +29,7 @@ joyeria-frontend/yarn-error.log*
 # IDEs y editores
 .idea/
 .vscode/
+.vs/
 *.swp
 *.swo
 *~

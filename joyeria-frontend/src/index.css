@@ -4,7 +4,7 @@
 
 @layer components {
   .btn-primary {
-    @apply px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+    @apply px-4 py-2 bg-gold-500 text-white rounded-md hover:bg-gold-600 focus:outline-none focus:ring-2 focus:ring-gold-500 focus:ring-offset-2;
   }
   
   .btn-secondary {
@@ -16,7 +16,7 @@
   }
 
   .card {
-    @apply bg-white rounded-lg shadow-md p-6;
+    @apply bg-white dark:bg-night-800 rounded-lg shadow-md p-6 border border-gold-100/40;
   }
 }
 
@@ -27,6 +27,52 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+:root {
+  --color-bg-light: #F7F3EB;       /* ivory */
+  --color-bg-surface-light: #FFFFFF;
+  --color-bg-dark: #050509;        /* night-900 */
+  --color-bg-surface-dark: #0C0C14;/* night-800 */
+  --color-gold-main: #D4AF37;
+  --reveal-duration: 400ms;
+  --stagger-delay: 80ms;
+}
+
+/* Reveal al scroll: opacidad + ligero movimiento (respetar prefers-reduced-motion) */
+.animate-reveal {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: reveal var(--reveal-duration) ease-out forwards;
+}
+.animate-reveal-slow {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: reveal 500ms ease-out forwards;
+}
+@keyframes reveal {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-reveal,
+  .animate-reveal-slow,
+  [class*="animate-reveal"] {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .transition-all {
+    transition-duration: 0.01ms !important;
+  }
 }
 
 code {

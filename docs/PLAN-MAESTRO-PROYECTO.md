@@ -407,6 +407,11 @@ Modelo completo:
 
 ## 7. Área Admin / Empleado (operación completa)
 
+### 7.0 Convenciones de la SPA (admin)
+- **Idioma de la UI:** textos del panel admin en **inglés** (navbar, productos, pedidos, usuarios, informe de ventas, etc.) para alinear con nombres de API y roles.
+- **Layout:** páginas admin comparten patrón: franja hero con gradiente, contenido en **`max-w-6xl mx-auto`**, tarjeta de tabla con `rounded-2xl shadow-lg`, overlay “Updating…” al recargar listas paginadas, paginación con `TablePagination`.
+- **Informe de ventas / gráfico:** moneda y tooltips con formato **`en-US`**; eje Y del gráfico con prefijo **`$`** legible; API de resumen mensual con etiquetas de mes en **`en-US`** (`MMM yyyy`).
+
 ### 7.1 Productos
 - CRUD completo + imágenes (Cloudinary)
 - Soft delete (recomendado): usar `Disponible` / `Activo` según política
@@ -488,7 +493,7 @@ Mínimo (pero “completo”):
 
 ## 12. Estado del software frente a este plan (brecha)
 
-*Última revisión: febrero 2026. Código en inglés en API (`Product`, `Order`, `Category`, `Material`, `User`, etc.) con documentación y plan en español.*
+*Última revisión: febrero 2026. Código y **UI del panel admin** en inglés; API (`Product`, `Order`, `Category`, `Material`, `User`, etc.) en inglés. Este plan y la guía de permisos siguen en español salvo nombres técnicos.*
 
 ### 12.1 Ya implementado (resumen)
 | Área | Qué hay |
@@ -500,7 +505,7 @@ Mínimo (pero “completo”):
 | Pedidos | API **orders**: cliente crea pedido (catálogo + líneas personalizadas), **mis pedidos** paginados; admin/employee listado, estado, borrado (admin); stock al crear. |
 | Carrito / UX tienda | Carrito en **localStorage**, toast al añadir, checkout en **`/cart`**, enlaces “seguir comprando”. |
 | Cuenta | Perfil, cambio de contraseña. |
-| Admin | Productos, pedidos, **dashboard** (KPIs + gráfico ventas 6 meses), **informe ventas** (`/api/admin/sales/summary`), usuarios (admin), ajustes. |
+| Admin | Productos, pedidos, **dashboard** (KPIs + gráfico ventas 6 meses), **informe ventas** (`/api/admin/sales/summary`, meses en inglés), usuarios (solo Admin), ajustes; **mismo patrón visual** (hero + `max-w-6xl` + tablas). |
 | Documentación | `docs/PERMISOS-Y-API.md`, `JoyeriaBackend.http`, README. |
 
 ### 12.2 Pendiente respecto al diagrama objetivo y módulos

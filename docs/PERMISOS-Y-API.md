@@ -138,5 +138,5 @@ La ruta `/admin/*` solo comprueba en el cliente que el JWT diga `Admin` o `Emplo
 ## Referencias en el repo
 
 - Backend: `Controllers/*.cs`, `Program.cs` (JWT + CORS), `Services/UserService.cs` (generación del token).
-- Frontend: `utils/jwtRole.ts`, `utils/api.ts` (header `Authorization`), `components/common/ProtectedRoute.tsx`.
+- Frontend: `utils/jwtRole.ts`, `utils/api.ts` (header `Authorization`), `components/common/ProtectedRoute.tsx`, páginas en `pages/admin/*` (UI en inglés, listados paginados alineados con `TablePagination`).
 - Pruebas HTTP: `joyeria-backend/JoyeriaBackend.http`.

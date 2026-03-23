@@ -56,7 +56,7 @@ npm start
 ## Características
 
 - **Backend:** API REST, autenticación JWT, Entity Framework Core con SQL Server, Swagger, Cloudinary, roles (**Admin**, **Employee**, **Customer**), catálogo con **categorías y materiales normalizados** (`Materials` + `MaterialId` en productos).
-- **Frontend:** React, React Router (navegación SPA), Tailwind CSS, modo claro/oscuro (por defecto claro), **carrito** (localStorage) y **checkout** para clientes, **pedido personalizado**, **perfil y cambio de contraseña**, catálogo con **paginación en servidor**, “mis pedidos”, dashboard admin con KPIs y **gráfico de ventas mensuales** (API real), **gestión de usuarios** (solo Admin), **informe de ventas** (Admin y Employee).
+- **Frontend:** React, React Router (navegación SPA), Tailwind CSS, modo claro/oscuro (por defecto claro), **carrito** (localStorage) y **checkout** para clientes, **pedido personalizado**, **perfil y cambio de contraseña**, catálogo con **paginación en servidor**, “mis pedidos”, panel admin en **inglés** con layout unificado (hero + contenedor ancho fijo), dashboard con KPIs y **gráfico de ventas mensuales** (API real, USD/`en-US`), **gestión de usuarios** (solo Admin), **informe de ventas** (Admin y Employee).
 
 ---
 

@@ -8,6 +8,14 @@ Accept: application/json
 GET {{JoyeriaBackend_HostAddress}}/api/categories
 Accept: application/json
 
+### Materials (id + name) — catalog filters & admin product form
+GET {{JoyeriaBackend_HostAddress}}/api/materials
+Accept: application/json
+
+### List products with material filter (exact name, e.g. 18K gold)
+GET {{JoyeriaBackend_HostAddress}}/api/products?page=1&pageSize=12&material=18K%20gold
+Accept: application/json
+
 ### Admin dashboard stats (Admin / Employee)
 GET {{JoyeriaBackend_HostAddress}}/api/admin/stats
 Authorization: Bearer {{token}}

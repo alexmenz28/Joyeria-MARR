@@ -13,6 +13,9 @@ public class ProductListQuery
     /// <summary>Exact category name (e.g. Rings).</summary>
     public string? Category { get; set; }
 
+    /// <summary>Exact material name (e.g. 18K gold); must match Materials.Name in the database.</summary>
+    public string? Material { get; set; }
+
     public decimal? MinPrice { get; set; }
 
     public decimal? MaxPrice { get; set; }

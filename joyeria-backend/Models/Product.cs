@@ -10,6 +10,11 @@ public class Product
     [JsonPropertyName("category")]
     public string? CategoryLabel => Category?.Name;
 
+    /// <summary>Serialized as <c>material</c> for API consumers (display name from FK).</summary>
+    [NotMapped]
+    [JsonPropertyName("material")]
+    public string? MaterialLabel => MaterialEntity?.Name;
+
     public int Id { get; set; }
 
     [Required]
@@ -31,7 +36,11 @@ public class Product
     [JsonIgnore]
     public Category Category { get; set; } = null!;
 
-    public string? Material { get; set; }
+    public int? MaterialId { get; set; }
+
+    [ForeignKey("MaterialId")]
+    [JsonIgnore]
+    public Material? MaterialEntity { get; set; }
 
     public string? Weight { get; set; }
 

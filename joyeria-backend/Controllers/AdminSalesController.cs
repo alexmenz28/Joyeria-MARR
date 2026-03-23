@@ -55,7 +55,7 @@ public class AdminSalesController : ControllerBase
             {
                 Year = d.Year,
                 Month = d.Month,
-                Label = d.ToString("MMM yyyy", CultureInfo.InvariantCulture),
+                Label = d.ToString("MMM yyyy", CultureInfo.GetCultureInfo("en-US")),
                 Revenue = row.Revenue,
                 OrderCount = row.OrderCount,
             });

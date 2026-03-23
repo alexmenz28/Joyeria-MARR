@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../../utils/api';
-import type { Product, PagedResult } from '../../types';
+import type { Product, PagedResult, MaterialRef } from '../../types';
 import AdminNavbar from '../../components/layout/AdminNavbar';
 import TablePagination, { ADMIN_TABLE_PAGE_SIZE } from '../../components/admin/TablePagination';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
@@ -21,6 +21,7 @@ const emptyProduct: Partial<Product> = {
   price: 0,
   stock: 0,
   category: '',
+  materialId: undefined,
   material: '',
   weight: '',
   isAvailable: true,
@@ -42,8 +43,18 @@ const ProductManagement = () => {
   const [tablePage, setTablePage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [listLoading, setListLoading] = useState(true);
+  /** First list fetch only — matches Orders pattern without hiding the table on action errors. */
+  const [bootstrapping, setBootstrapping] = useState(true);
   /** When search changes and we reset page, skip one fetch (next run uses page 1). */
   const skipFetchAfterSearchResetRef = useRef(false);
+  const [materialOptions, setMaterialOptions] = useState<MaterialRef[]>([]);
+
+  useEffect(() => {
+    void api
+      .get<MaterialRef[]>('/api/materials')
+      .then((r) => setMaterialOptions(r.data))
+      .catch(() => setMaterialOptions([]));
+  }, []);
 
   const loadProducts = useCallback(async () => {
     try {
@@ -61,6 +72,7 @@ const ProductManagement = () => {
       setError('Could not load products.');
     } finally {
       setListLoading(false);
+      setBootstrapping(false);
     }
   }, [tablePage, debouncedSearch]);
 
@@ -86,6 +98,7 @@ const ProductManagement = () => {
     setCurrentProduct({
       ...product,
       category: product.category ?? '',
+      materialId: product.materialId ?? undefined,
     });
     setCurrentImageUrl(product.imageUrl || null);
     setSelectedImage(null);
@@ -142,7 +155,10 @@ const ProductManagement = () => {
       formData.append('price', String(currentProduct.price ?? 0));
       formData.append('stock', String(currentProduct.stock ?? 0));
       formData.append('category', currentProduct.category || '');
-      formData.append('material', currentProduct.material || '');
+      formData.append(
+        'materialId',
+        currentProduct.materialId != null && currentProduct.materialId > 0 ? String(currentProduct.materialId) : ''
+      );
       formData.append('weight', currentProduct.weight || '');
       formData.append('isAvailable', String(currentProduct.isAvailable !== false));
 
@@ -188,16 +204,26 @@ const ProductManagement = () => {
   return (
     <>
       <AdminNavbar />
-      <div className="w-full px-4 pt-24 bg-ivory dark:bg-night-900 min-h-screen transition-colors">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
-          <h2 className="text-3xl font-bold text-marrGold drop-shadow">Product management</h2>
-          <div className="flex gap-2 w-full md:w-auto">
+      <div className="w-full min-h-screen bg-ivory dark:bg-night-900 transition-colors pt-24">
+        <section className="relative h-40 flex items-center justify-center bg-gradient-to-br from-ivory via-white to-gold-50 dark:from-night-900 dark:via-night-800 dark:to-night-900 overflow-hidden px-6">
+          <div className="relative z-10 text-center">
+            <h1 className="text-3xl md:text-4xl font-bold text-marrGold">Product management</h1>
+            <p className="text-gray-700 dark:text-gray-300 mt-1">Catalog, stock and images</p>
+          </div>
+        </section>
+
+        <section className="max-w-6xl mx-auto py-12 px-6 md:px-8">
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <label className="sr-only" htmlFor="product-search">
+              Search products
+            </label>
             <input
-              type="text"
+              id="product-search"
+              type="search"
               placeholder="Search by name or category…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="px-4 py-2 rounded-lg border border-gold-200 dark:border-gold-500/30 focus:outline-none focus:ring-2 focus:ring-gold-500 bg-white dark:bg-night-700 text-gray-900 dark:text-gray-100 w-full md:w-64 shadow"
+              className="w-full sm:max-w-md px-4 py-2 rounded-lg border border-gold-200 dark:border-gold-500/30 bg-white dark:bg-night-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gold-500"
             />
             <button
               type="button"
@@ -207,95 +233,110 @@ const ProductManagement = () => {
                 setCurrentProduct({ ...emptyProduct });
                 setIsModalOpen(true);
               }}
-              className="bg-gold-500 text-white px-6 py-2 rounded-lg shadow-lg hover:bg-gold-600 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-night-900 focus:ring-gold-500 font-semibold text-base transition-all duration-200"
+              className="shrink-0 bg-gold-500 text-white px-5 py-2 rounded-lg shadow-md hover:bg-gold-600 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-night-900 focus:ring-gold-500 font-semibold text-sm transition-all duration-200"
             >
               Add product
             </button>
           </div>
-        </div>
 
-        {error && !isModalOpen && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg relative mb-4 max-w-xl mx-auto shadow">
-            {error}
-          </div>
-        )}
+          {bootstrapping && products.length === 0 && (
+            <p className="text-marrGold animate-pulse mb-4">Loading…</p>
+          )}
+          {error && !isModalOpen && (
+            <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
+          )}
 
-        <div className="rounded-xl border border-gold-200/60 dark:border-gold-500/20 shadow-xl bg-white dark:bg-night-800 overflow-hidden transition-colors">
-          <div className="overflow-x-auto">
-          <table className="min-w-full transition-colors">
-            <thead className="bg-gold-50 dark:bg-night-700">
-              <tr>
-                <th className="py-3 px-6 text-left text-xs font-bold text-marrGold uppercase tracking-wider">ID</th>
-                <th className="py-3 px-6 text-left text-xs font-bold text-marrGold uppercase tracking-wider">Name</th>
-                <th className="py-3 px-6 text-left text-xs font-bold text-marrGold uppercase tracking-wider">Category</th>
-                <th className="py-3 px-6 text-left text-xs font-bold text-marrGold uppercase tracking-wider">Price</th>
-                <th className="py-3 px-6 text-left text-xs font-bold text-marrGold uppercase tracking-wider">Stock</th>
-                <th className="py-3 px-6 text-left text-xs font-bold text-marrGold uppercase tracking-wider">Image</th>
-                <th className="py-3 px-6 text-center text-xs font-bold text-marrGold uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gold-500/20">
-              {listLoading ? (
-                <tr>
-                  <td colSpan={7} className="py-10 px-6 text-center text-marrGold animate-pulse">
-                    Loading products…
-                  </td>
-                </tr>
-              ) : products.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="py-10 px-6 text-center text-gray-500 dark:text-gray-400">
-                    {totalCount === 0 && !debouncedSearch.trim()
-                      ? 'No products yet.'
-                      : 'No products match your search.'}
-                  </td>
-                </tr>
-              ) : (
-              products.map((product) => (
-                <tr key={product.id} className="hover:bg-marrGold/10 dark:hover:bg-marrGold/10 transition-colors">
-                  <td className="py-4 px-6 whitespace-nowrap text-sm font-bold text-marrGold">{product.id}</td>
-                  <td className="py-4 px-6 whitespace-nowrap text-base text-gray-900 dark:text-gray-100 font-semibold">{product.name}</td>
-                  <td className="py-4 px-6 whitespace-nowrap text-base text-gray-700 dark:text-gray-200">{product.category}</td>
-                  <td className="py-4 px-6 whitespace-nowrap text-base text-gray-700 dark:text-gray-200">${product.price.toFixed(2)}</td>
-                  <td className="py-4 px-6 whitespace-nowrap text-base text-gray-700 dark:text-gray-200">{product.stock}</td>
-                  <td className="py-4 px-6 whitespace-nowrap text-base text-gray-700 dark:text-gray-200">
-                    {product.imageUrl && product.imageUrl.length > 0 ? (
-                      <img src={product.imageUrl} alt={product.name} className="h-14 w-14 object-cover rounded-full border-2 border-marrGold shadow" />
-                    ) : (
-                      <span className="text-gray-400">No image</span>
-                    )}
-                  </td>
-                  <td className="py-4 px-6 whitespace-nowrap text-center text-base font-medium">
-                    <div className="flex flex-wrap items-center justify-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleEdit(product)}
-                      className="bg-gold-500 text-white px-4 py-2 rounded-lg hover:bg-gold-600 transition-all duration-200 shadow"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteClick(product)}
-                      className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-all duration-200 shadow"
-                    >
-                      Delete
-                    </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
+          {!bootstrapping && (
+            <div className="rounded-2xl border border-gold-200/60 dark:border-gold-500/20 shadow-lg bg-white dark:bg-night-800 overflow-hidden relative">
+              {listLoading && (
+                <div className="absolute inset-0 z-10 flex items-start justify-center pt-8 bg-white/50 dark:bg-night-800/50 pointer-events-none">
+                  <span className="text-marrGold text-sm animate-pulse">Updating…</span>
+                </div>
               )}
-            </tbody>
-          </table>
-          </div>
-          <TablePagination
-            page={tablePage}
-            pageSize={ADMIN_TABLE_PAGE_SIZE}
-            totalItems={totalCount}
-            onPageChange={setTablePage}
-            itemNoun="product"
-          />
-        </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-left text-sm">
+                  <thead className="bg-gold-50 dark:bg-night-700 text-marrGold uppercase text-xs font-bold tracking-wider">
+                    <tr>
+                      <th className="py-3 px-4">ID</th>
+                      <th className="py-3 px-4">Name</th>
+                      <th className="py-3 px-4">Category</th>
+                      <th className="py-3 px-4">Material</th>
+                      <th className="py-3 px-4">Price</th>
+                      <th className="py-3 px-4">Stock</th>
+                      <th className="py-3 px-4">Image</th>
+                      <th className="py-3 px-4 text-center">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gold-200/40 dark:divide-gold-500/20 text-gray-800 dark:text-gray-200">
+                    {products.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="py-8 px-4 text-center text-gray-500 dark:text-gray-400">
+                          {totalCount === 0 && !debouncedSearch.trim()
+                            ? 'No products yet.'
+                            : 'No products match your search.'}
+                        </td>
+                      </tr>
+                    ) : (
+                      products.map((product) => (
+                        <tr key={product.id} className="hover:bg-gold-50/50 dark:hover:bg-night-700/50">
+                          <td className="py-3 px-4 whitespace-nowrap font-semibold text-marrGold">{product.id}</td>
+                          <td className="py-3 px-4 whitespace-nowrap font-medium text-gray-900 dark:text-gray-100">
+                            {product.name}
+                          </td>
+                          <td className="py-3 px-4 whitespace-nowrap">{product.category}</td>
+                          <td
+                            className="py-3 px-4 whitespace-nowrap text-gray-600 dark:text-gray-300 max-w-[140px] truncate"
+                            title={product.material ?? ''}
+                          >
+                            {product.material ?? '—'}
+                          </td>
+                          <td className="py-3 px-4 whitespace-nowrap">${product.price.toFixed(2)}</td>
+                          <td className="py-3 px-4 whitespace-nowrap">{product.stock}</td>
+                          <td className="py-3 px-4 whitespace-nowrap">
+                            {product.imageUrl && product.imageUrl.length > 0 ? (
+                              <img
+                                src={product.imageUrl}
+                                alt={product.name}
+                                className="h-11 w-11 object-cover rounded-full border border-marrGold/80"
+                              />
+                            ) : (
+                              <span className="text-gray-400">No image</span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 whitespace-nowrap text-center">
+                            <div className="flex flex-wrap items-center justify-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleEdit(product)}
+                                className="bg-gold-500 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-gold-600 transition-colors"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteClick(product)}
+                                className="bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-red-700 transition-colors"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              <TablePagination
+                page={tablePage}
+                pageSize={ADMIN_TABLE_PAGE_SIZE}
+                totalItems={totalCount}
+                onPageChange={setTablePage}
+                itemNoun="product"
+              />
+            </div>
+          )}
+        </section>
 
         {productToDelete && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
@@ -432,13 +473,25 @@ const ProductManagement = () => {
                     <label htmlFor="product-material" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                       Material
                     </label>
-                    <input
-                      type="text"
+                    <select
                       id="product-material"
                       className="mt-1 block w-full border border-gold-200 dark:border-gold-500/30 rounded-lg shadow-sm py-2 px-3 bg-white dark:bg-night-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gold-500 sm:text-sm transition-colors"
-                      value={currentProduct.material || ''}
-                      onChange={(e) => setCurrentProduct({ ...currentProduct, material: e.target.value })}
-                    />
+                      value={currentProduct.materialId != null && currentProduct.materialId > 0 ? String(currentProduct.materialId) : ''}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setCurrentProduct({
+                          ...currentProduct,
+                          materialId: v === '' ? undefined : Number(v),
+                        });
+                      }}
+                    >
+                      <option value="">None</option>
+                      {materialOptions.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label htmlFor="product-weight" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">

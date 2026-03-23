@@ -80,12 +80,15 @@ const Catalog = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [categories, setCategories] = useState<string[]>([]);
   const [categoriesError, setCategoriesError] = useState(false);
+  const [materials, setMaterials] = useState<string[]>([]);
+  const [materialsError, setMaterialsError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [gridLoading, setGridLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
+  const [material, setMaterial] = useState('');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [inStockOnly, setInStockOnly] = useState(false);
@@ -113,6 +116,21 @@ const Catalog = () => {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get<{ id: number; name: string }[]>('/api/materials')
+      .then((r) => {
+        if (!cancelled) setMaterials(r.data.map((m) => m.name));
+      })
+      .catch(() => {
+        if (!cancelled) setMaterialsError(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const loadCatalog = useCallback(async () => {
     try {
       setGridLoading(true);
@@ -124,6 +142,7 @@ const Catalog = () => {
       });
       if (debouncedSearch.trim()) params.set('search', debouncedSearch.trim());
       if (category) params.set('category', category);
+      if (material) params.set('material', material);
       const minN = parseFloat(debouncedMin);
       if (debouncedMin.trim() !== '' && !Number.isNaN(minN)) params.set('minPrice', String(minN));
       const maxN = parseFloat(debouncedMax);
@@ -151,6 +170,7 @@ const Catalog = () => {
     debouncedMin,
     debouncedMax,
     category,
+    material,
     sortBy,
     inStockOnly,
   ]);
@@ -163,7 +183,7 @@ const Catalog = () => {
       }
       return p;
     });
-  }, [debouncedSearch, debouncedMin, debouncedMax, category, sortBy, inStockOnly]);
+  }, [debouncedSearch, debouncedMin, debouncedMax, category, material, sortBy, inStockOnly]);
 
   useEffect(() => {
     if (skipFetchAfterFilterResetRef.current) {
@@ -239,6 +259,24 @@ const Catalog = () => {
               </select>
               {categoriesError && (
                 <span className="text-xs text-amber-600 dark:text-amber-400 mt-1">Categories unavailable</span>
+              )}
+            </div>
+            <div className="flex flex-col min-w-[160px]">
+              <label className="text-xs font-semibold text-marrGold mb-1 pl-1">Material</label>
+              <select
+                className="w-full rounded-lg border border-marrGold bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-marrGold focus:border-marrGold py-2 px-3"
+                value={material}
+                onChange={(e) => setMaterial(e.target.value)}
+              >
+                <option value="">All</option>
+                {materials.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+              {materialsError && (
+                <span className="text-xs text-amber-600 dark:text-amber-400 mt-1">Materials unavailable</span>
               )}
             </div>
             <div className="flex flex-col min-w-[110px]">

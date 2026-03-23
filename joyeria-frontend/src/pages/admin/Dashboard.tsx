@@ -7,6 +7,7 @@ import AdminNavbar from '../../components/layout/AdminNavbar';
 import api from '../../utils/api';
 import { getJwtRole, isAdmin } from '../../utils/jwtRole';
 import type { AdminDashboardStats, SalesSummary } from '../../types';
+import { formatUsd, formatUsdAxisTick } from '../../utils/usdFormat';
 
 const KPICard = ({
   title,
@@ -39,13 +40,9 @@ const QuickLink = ({ to, title, icon: Icon }: { to: string; title: string; icon:
   </Link>
 );
 
-function formatMoney(n: number) {
-  return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(n);
-}
-
 function formatDate(iso: string) {
   try {
-    return new Date(iso).toLocaleDateString(undefined, { dateStyle: 'medium' });
+    return new Date(iso).toLocaleDateString('en-US', { dateStyle: 'medium' });
   } catch {
     return iso;
   }
@@ -136,7 +133,7 @@ const Dashboard = () => {
           />
           <KPICard
             title="Revenue (orders)"
-            value={loading ? '…' : formatMoney(stats?.ordersRevenueTotal ?? 0)}
+            value={loading ? '…' : formatUsd(stats?.ordersRevenueTotal ?? 0)}
             icon={DollarSign}
             subtitle="Sum of order totals"
           />
@@ -165,9 +162,9 @@ const Dashboard = () => {
                 <BarChart data={salesChartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
                   <XAxis dataKey="name" stroke="#9ca3af" tick={{ fontSize: 11 }} />
-                  <YAxis stroke="#9ca3af" tickFormatter={(v) => formatMoney(Number(v))} width={68} />
+                  <YAxis stroke="#9ca3af" tickFormatter={(v) => formatUsdAxisTick(v)} width={68} />
                   <Tooltip
-                    formatter={(value: number) => [formatMoney(value), 'Revenue']}
+                    formatter={(value: number) => [formatUsd(value), 'Revenue']}
                     contentStyle={{
                       backgroundColor: '#374151',
                       borderColor: '#4b5563',
@@ -202,7 +199,7 @@ const Dashboard = () => {
                           </p>
                         </div>
                         <div className="inline-flex items-center text-base font-semibold text-gray-900 dark:text-gray-100 tabular-nums">
-                          {formatMoney(order.total)}
+                          {formatUsd(order.total)}
                         </div>
                       </div>
                       <div className="text-right text-xs text-gold-600 dark:text-gold-400 font-bold">{order.status ?? '—'}</div>

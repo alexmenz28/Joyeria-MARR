@@ -7,7 +7,7 @@ const PAGE_SIZE = 10;
 
 function formatDate(iso: string) {
   try {
-    return new Date(iso).toLocaleDateString(undefined, { dateStyle: 'medium' });
+    return new Date(iso).toLocaleDateString('en-US', { dateStyle: 'medium' });
   } catch {
     return iso;
   }
@@ -64,7 +64,7 @@ const UserManagement = () => {
       setData(res);
       setDrafts({});
     } catch {
-      setError('No se pudieron cargar los usuarios. Comprueba que tu sesión sea de administrador.');
+      setError('Could not load users. Make sure you are signed in as an administrator.');
       setData(null);
     } finally {
       setLoading(false);
@@ -113,8 +113,8 @@ const UserManagement = () => {
       <div className="w-full min-h-screen bg-ivory dark:bg-night-900 transition-colors pt-24">
         <section className="relative h-40 flex items-center justify-center bg-gradient-to-br from-ivory via-white to-gold-50 dark:from-night-900 dark:via-night-800 dark:to-night-900 overflow-hidden px-6">
           <div className="relative z-10 text-center">
-            <h1 className="text-3xl md:text-4xl font-bold text-marrGold">Gestión de usuarios</h1>
-            <p className="text-gray-700 dark:text-gray-300 mt-1">Rol y cuenta activa (solo administradores)</p>
+            <h1 className="text-3xl md:text-4xl font-bold text-marrGold">User management</h1>
+            <p className="text-gray-700 dark:text-gray-300 mt-1">Role and active account (administrators only)</p>
           </div>
         </section>
 
@@ -128,10 +128,10 @@ const UserManagement = () => {
           <div className="bg-white dark:bg-night-800 rounded-2xl shadow-lg border border-gold-200/60 dark:border-gold-500/20 p-6">
             <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between mb-6">
               <label className="flex-1 max-w-md">
-                <span className="sr-only">Buscar</span>
+                <span className="sr-only">Search</span>
                 <input
                   type="search"
-                  placeholder="Buscar por email o nombre…"
+                  placeholder="Search by email or name…"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full rounded-lg border border-gold-200/80 dark:border-gold-500/30 bg-ivory dark:bg-night-900 px-3 py-2 text-gray-900 dark:text-gray-100"
@@ -143,19 +143,19 @@ const UserManagement = () => {
               <table className="min-w-full text-sm text-left">
                 <thead>
                   <tr className="border-b border-gold-200/50 dark:border-gold-500/20 text-marrGold">
-                    <th className="py-3 pr-4 font-semibold">Usuario</th>
+                    <th className="py-3 pr-4 font-semibold">User</th>
                     <th className="py-3 pr-4 font-semibold">Email</th>
-                    <th className="py-3 pr-4 font-semibold">Rol</th>
-                    <th className="py-3 pr-4 font-semibold">Activo</th>
-                    <th className="py-3 pr-4 font-semibold">Alta</th>
-                    <th className="py-3 font-semibold w-28">Acciones</th>
+                    <th className="py-3 pr-4 font-semibold">Role</th>
+                    <th className="py-3 pr-4 font-semibold">Active</th>
+                    <th className="py-3 pr-4 font-semibold">Joined</th>
+                    <th className="py-3 font-semibold w-28">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
                       <td colSpan={6} className="py-8 text-center text-marrGold animate-pulse">
-                        Cargando…
+                        Loading…
                       </td>
                     </tr>
                   ) : data?.items.length ? (
@@ -200,7 +200,7 @@ const UserManagement = () => {
                               onClick={() => void saveRow(u)}
                               className="rounded-lg px-3 py-1.5 text-xs font-medium text-white bg-gold-500 hover:bg-gold-600 disabled:opacity-40 disabled:cursor-not-allowed"
                             >
-                              {savingId === u.id ? '…' : 'Guardar'}
+                              {savingId === u.id ? '…' : 'Save'}
                             </button>
                           </td>
                         </tr>
@@ -209,7 +209,7 @@ const UserManagement = () => {
                   ) : (
                     <tr>
                       <td colSpan={6} className="py-8 text-center text-gray-500 dark:text-gray-400">
-                        No hay usuarios en esta página.
+                        No users on this page.
                       </td>
                     </tr>
                   )}
@@ -220,7 +220,7 @@ const UserManagement = () => {
             {data && data.totalPages > 1 && (
               <div className="mt-6 flex flex-wrap items-center justify-between gap-4 text-sm text-gray-600 dark:text-gray-400">
                 <span>
-                  Página {data.page} de {data.totalPages} ({data.totalCount} usuarios)
+                  Page {data.page} of {data.totalPages} ({data.totalCount} users)
                 </span>
                 <div className="flex gap-2">
                   <button
@@ -229,7 +229,7 @@ const UserManagement = () => {
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     className="rounded-lg border border-gold-300 dark:border-gold-500/40 px-3 py-1 disabled:opacity-40"
                   >
-                    Anterior
+                    Previous
                   </button>
                   <button
                     type="button"
@@ -237,7 +237,7 @@ const UserManagement = () => {
                     onClick={() => setPage((p) => p + 1)}
                     className="rounded-lg border border-gold-300 dark:border-gold-500/40 px-3 py-1 disabled:opacity-40"
                   >
-                    Siguiente
+                    Next
                   </button>
                 </div>
               </div>

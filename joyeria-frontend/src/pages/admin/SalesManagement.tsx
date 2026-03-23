@@ -3,10 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import AdminNavbar from '../../components/layout/AdminNavbar';
 import api from '../../utils/api';
 import type { SalesSummary } from '../../types';
-
-function formatMoney(n: number) {
-  return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(n);
-}
+import { formatUsd, formatUsdAxisTick } from '../../utils/usdFormat';
 
 const MONTH_OPTIONS = [6, 12, 18, 24, 36];
 
@@ -26,7 +23,7 @@ const SalesManagement = () => {
         if (!cancelled) setSummary(data);
       } catch {
         if (!cancelled) {
-          setError('No se pudo cargar el informe. Comprueba permisos (Admin o Employee) y la API.');
+          setError('Could not load the report. Check permissions (Admin or Employee) and the API.');
           setSummary(null);
         }
       } finally {
@@ -52,8 +49,8 @@ const SalesManagement = () => {
       <div className="w-full min-h-screen bg-ivory dark:bg-night-900 transition-colors pt-24">
         <section className="relative h-40 flex items-center justify-center bg-gradient-to-br from-ivory via-white to-gold-50 dark:from-night-900 dark:via-night-800 dark:to-night-900 overflow-hidden px-6">
           <div className="relative z-10 text-center">
-            <h1 className="text-3xl md:text-4xl font-bold text-marrGold">Informe de ventas</h1>
-            <p className="text-gray-700 dark:text-gray-300 mt-1">Ingresos y pedidos por mes</p>
+            <h1 className="text-3xl md:text-4xl font-bold text-marrGold">Sales report</h1>
+            <p className="text-gray-700 dark:text-gray-300 mt-1">Revenue and orders by month</p>
           </div>
         </section>
 
@@ -66,7 +63,7 @@ const SalesManagement = () => {
 
           <div className="flex flex-wrap items-center gap-4">
             <label className="text-sm text-gray-700 dark:text-gray-300 flex items-center gap-2">
-              Meses:
+              Months:
               <select
                 value={months}
                 onChange={(e) => setMonths(Number(e.target.value))}
@@ -74,32 +71,32 @@ const SalesManagement = () => {
               >
                 {MONTH_OPTIONS.map((m) => (
                   <option key={m} value={m}>
-                    Últimos {m}
+                    Last {m}
                   </option>
                 ))}
               </select>
             </label>
             {!loading && summary && (
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Total en rango: <strong className="text-marrGold">{formatMoney(summary.totalRevenueInRange)}</strong>{' '}
-                · {summary.totalOrdersInRange} pedidos
+                Total in range: <strong className="text-marrGold">{formatUsd(summary.totalRevenueInRange)}</strong>{' '}
+                · {summary.totalOrdersInRange} orders
               </p>
             )}
           </div>
 
           <div className="bg-white dark:bg-night-800 rounded-2xl shadow-lg border border-gold-200/60 dark:border-gold-500/20 p-6">
-            <h2 className="text-xl font-bold text-marrGold mb-4">Ingresos mensuales</h2>
+            <h2 className="text-xl font-bold text-marrGold mb-4">Monthly revenue</h2>
             {loading ? (
-              <p className="text-marrGold animate-pulse py-24 text-center">Cargando…</p>
+              <p className="text-marrGold animate-pulse py-24 text-center">Loading…</p>
             ) : chartData.length ? (
               <ResponsiveContainer width="100%" height={360}>
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 148, 148, 0.2)" />
                   <XAxis dataKey="name" stroke="#9ca3af" tick={{ fontSize: 11 }} />
-                  <YAxis stroke="#9ca3af" tickFormatter={(v) => formatMoney(Number(v))} width={72} />
+                  <YAxis stroke="#9ca3af" tickFormatter={(v) => formatUsdAxisTick(v)} width={72} />
                   <Tooltip
                     formatter={(value: number, name: string) =>
-                      name === 'revenue' ? [formatMoney(value), 'Ingresos'] : [value, 'Pedidos']
+                      name === 'revenue' ? [formatUsd(value), 'Revenue'] : [value, 'Orders']
                     }
                     contentStyle={{
                       backgroundColor: '#374151',
@@ -108,22 +105,22 @@ const SalesManagement = () => {
                     }}
                   />
                   <Legend />
-                  <Bar dataKey="revenue" fill="#bfa14a" name="Ingresos" />
+                  <Bar dataKey="revenue" fill="#bfa14a" name="Revenue" />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-gray-500 dark:text-gray-400 py-12 text-center">No hay datos en el rango seleccionado.</p>
+              <p className="text-gray-500 dark:text-gray-400 py-12 text-center">No data for the selected range.</p>
             )}
           </div>
 
           <div className="bg-white dark:bg-night-800 rounded-2xl shadow-lg border border-gold-200/60 dark:border-gold-500/20 p-6 overflow-x-auto">
-            <h2 className="text-xl font-bold text-marrGold mb-4">Detalle por mes</h2>
+            <h2 className="text-xl font-bold text-marrGold mb-4">Monthly breakdown</h2>
             <table className="min-w-full text-sm text-left">
               <thead>
                 <tr className="border-b border-gold-200/50 dark:border-gold-500/20 text-marrGold">
-                  <th className="py-2 pr-4 font-semibold">Mes</th>
-                  <th className="py-2 pr-4 font-semibold">Ingresos</th>
-                  <th className="py-2 font-semibold">Pedidos</th>
+                  <th className="py-2 pr-4 font-semibold">Month</th>
+                  <th className="py-2 pr-4 font-semibold">Revenue</th>
+                  <th className="py-2 font-semibold">Orders</th>
                 </tr>
               </thead>
               <tbody>
@@ -140,14 +137,14 @@ const SalesManagement = () => {
                       className="border-b border-gray-100 dark:border-gold-500/10 text-gray-800 dark:text-gray-200"
                     >
                       <td className="py-2 pr-4">{m.label}</td>
-                      <td className="py-2 pr-4 tabular-nums">{formatMoney(Number(m.revenue))}</td>
+                      <td className="py-2 pr-4 tabular-nums">{formatUsd(Number(m.revenue))}</td>
                       <td className="py-2 tabular-nums">{m.orderCount}</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
                     <td colSpan={3} className="py-8 text-center text-gray-500">
-                      Sin filas.
+                      No rows.
                     </td>
                   </tr>
                 )}

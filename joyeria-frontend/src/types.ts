@@ -68,6 +68,12 @@ export interface PagedResult<T> {
   totalPages: number;
 }
 
+/** GET /api/materials — reference list for filters and admin. */
+export interface MaterialRef {
+  id: number;
+  name: string;
+}
+
 /** Mirrors API JSON (camelCase) from JoyeriaBackend */
 export interface Product {
   id: number;
@@ -77,6 +83,9 @@ export interface Product {
   /** Category display name (from API `category`) */
   category: string;
   imageUrl?: string | null;
+  /** FK to Materials; optional. */
+  materialId?: number | null;
+  /** Display name from Materials (API `material`). */
   material?: string | null;
   weight?: string | null;
   isAvailable: boolean;

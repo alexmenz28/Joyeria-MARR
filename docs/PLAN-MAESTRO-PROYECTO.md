@@ -475,10 +475,10 @@ Mínimo (pero “completo”):
 
 ## 11. Roadmap “completo” (orden recomendado)
 
-1) **Pedidos API + Carrito + Checkout** (end-to-end compra estándar)  
-2) **Detalle de producto real** (consumo API, galería, CTA)  
-3) **Mis pedidos** (cliente) + Admin pedidos (estados)  
-4) **Materiales (tabla) + UI de administración**  
+1) **Pedidos API + Carrito + Checkout** (end-to-end compra estándar) — *hecho*  
+2) **Detalle de producto real** (consumo API, galería, CTA) — *ficha básica hecha; galería múltiple pendiente*  
+3) **Mis pedidos** (cliente) + Admin pedidos (estados) — *hecho*  
+4) **Materiales (tabla) + UI de administración** — *hecho (`Materials`, `MaterialId`, `GET /api/materials`, filtro catálogo, desplegable admin)*  
 5) **Proveedores + coste + margen + reportes básicos**  
 6) **Compras a proveedor (cabecera+líneas) + movimientos de stock**  
 7) **Facturación + devoluciones**  
@@ -488,36 +488,40 @@ Mínimo (pero “completo”):
 
 ## 12. Estado del software frente a este plan (brecha)
 
-*Última revisión orientativa del repo: backend con `Auth` + `Productos`; modelos `Usuario`, `Producto`, `Pedido`, `DetallePedido`, `Rol`, `Categoria`, `EstadoPedido`.*
+*Última revisión: febrero 2026. Código en inglés en API (`Product`, `Order`, `Category`, `Material`, `User`, etc.) con documentación y plan en español.*
 
-### 12.1 Ya implementado (alineado parcialmente con el plan)
+### 12.1 Ya implementado (resumen)
 | Área | Qué hay |
 |------|---------|
-| Auth | Registro, login, JWT, roles (Admin / Empleado / Cliente). |
-| Catálogo API | CRUD productos, listado, filtro por categoría (nombre), imágenes Cloudinary. |
-| Normalización base | `RolId`, `CategoriaId`, `EstadoPedidoId` en BD; seed de roles/categorías/estados. |
-| Frontend | Home, catálogo con paginación cliente, login/registro, contacto (UI), admin productos, rutas y tema. |
+| Auth | Registro, login, JWT, roles **Admin / Employee / Customer**; cuentas inactivas no hacen login; gestión de usuarios (listado paginado, rol y activo) **solo Admin**. |
+| Catálogo API | CRUD productos (multipart + Cloudinary), listado paginado, filtros **categoría**, **material** (nombre exacto), precio, stock, ordenación; `GET` por id con categoría y material. |
+| Materiales | Tabla **`Materials`**, FK **`Product.MaterialId`** (nullable), **`GET /api/materials`** (público); migración desde texto legado `Material`; seed de materiales de referencia. |
+| Categorías | Tabla **Categories**, **`GET /api/categories`** (nombres). |
+| Pedidos | API **orders**: cliente crea pedido (catálogo + líneas personalizadas), **mis pedidos** paginados; admin/employee listado, estado, borrado (admin); stock al crear. |
+| Carrito / UX tienda | Carrito en **localStorage**, toast al añadir, checkout en **`/cart`**, enlaces “seguir comprando”. |
+| Cuenta | Perfil, cambio de contraseña. |
+| Admin | Productos, pedidos, **dashboard** (KPIs + gráfico ventas 6 meses), **informe ventas** (`/api/admin/sales/summary`), usuarios (admin), ajustes. |
+| Documentación | `docs/PERMISOS-Y-API.md`, `JoyeriaBackend.http`, README. |
 
 ### 12.2 Pendiente respecto al diagrama objetivo y módulos
 | Prioridad | Backend (BD + API) | Frontend |
 |-----------|-------------------|----------|
-| Alta | **`PedidosController`** + crear pedido desde carrito, listar por usuario, cambiar estado (admin); cálculo de **Total** y reglas de **stock**. | **Carrito** (estado + persistencia), **checkout**, **detalle de producto** real (`GET` por id), **mis pedidos**. |
-| Alta | **Material como tabla** (`Materiales` + `MaterialId`); migración y seed; API de materiales. | Filtros por material, formularios admin con desplegable material. |
-| Alta | **DTOs** y contratos estables (evitar exponer entidades cuando crezca el modelo). | Tipos TS alineados con API. |
-| Media | **Proveedores**, `Pais` + `IdentificacionFiscal`; **coste** en producto o vía compras. | Pantallas admin proveedores / coste (si aplica). |
-| Media | **Compras a proveedor** (cabecera + líneas), **movimientos de stock** o **stock por ubicación**. | Flujos admin de compras e inventario. |
-| Media | **Direcciones** de envío; **Pedido** con subtotales/impuestos según jurisdicción (EE. UU. / LATAM). | Checkout con dirección y resumen fiscal. |
-| Media | **Pagos** (manual al inicio; integración Stripe/PayPal después). | UI de pago / confirmación. |
-| Baja | **Facturas**, **devoluciones**, **certificados**, **solicitudes personalizadas** (tabla propia o flujo pedido). | Pantallas y reportes asociados. |
-| Baja | **Contacto** con persistencia o email; **citas / reparaciones / CRM**. | Conectar formularios a API. |
-| Transversal | **Soft delete** coherente (`Disponible` en catálogo, no borrar físico por defecto). | Catálogo que respete disponibilidad; admin “desactivar”. |
-| Transversal | **Paginación server-side** en listados grandes; **tests** backend/frontend. | — |
+| Alta | **DTOs** dedicados en todos los endpoints sensibles; evitar exponer entidades completas a largo plazo. | Tipos TS y validación alineados. |
+| Alta | **Galería** de imágenes por producto (más de una URL o entidad adjuntos). | Carrusel en ficha y admin. |
+| Media | **Proveedores**, `Pais` + identificación fiscal; **coste** en producto o vía compras. | Admin proveedores / coste. |
+| Media | **Compras a proveedor**, **movimientos de stock** o **stock por ubicación**. | Flujos admin inventario. |
+| Media | **Direcciones** de envío; pedido con **subtotal / impuestos / total** según jurisdicción. | Checkout con dirección y resumen fiscal. |
+| Media | **Pagos** (registro manual → Stripe/PayPal). | UI de pago y confirmación. |
+| Media | Reportes: ventas por **categoría/material**, **margen** (requiere coste), productos top. | Gráficos / tablas. |
+| Baja | **Facturas**, **devoluciones**, **certificados**, flujo **solicitudes personalizadas** ampliado. | Pantallas y reportes. |
+| Baja | **Contacto** persistido o email; **citas / reparaciones / CRM**. | API + formularios. |
+| Transversal | **Soft delete** de producto (desactivar vs `DELETE` físico); revisar FKs en líneas de pedido. | Admin “desactivar” sin romper histórico. |
+| Transversal | **Tests** backend/frontend; **rate limiting**; i18n / multi-moneda según §1.3. | — |
 
-### 12.3 Inconsistencias actuales a corregir cuando se avance
-- **`Producto.Material`** sigue siendo **string** en código → el plan pide **tabla `Materiales`**.
-- **`PedidoService`** existe pero **no hay API REST de pedidos** → el cliente no puede cerrar compra ni ver historial.
-- **Eliminar producto** en admin puede ser **borrado físico**; el plan recomienda **desactivar** y alinear con FKs en `DetallePedido`.
-- **Totales e impuestos** en `Pedido` (modelo actual) son mínimos vs plan (subtotal / impuestos / desglose por jurisdicción).
+### 12.3 Inconsistencias o deuda técnica conocida
+- **Eliminar producto** en admin sigue siendo **borrado físico** (`DELETE`); el plan recomienda preferir **desactivar** cuando haya líneas de pedido que referencian el producto (hoy `OrderLine` usa `SetNull` en `ProductId`).
+- **Totales e impuestos** en `Order` siguen siendo un **`Total`** simple frente al modelo fiscal completo del plan (subtotal imponible, impuestos, desglose por país).
+- **Material**: el campo opcional **`AlloyOrFineness`** en `Materials` está en modelo para el futuro; la UI aún solo usa **nombre** en filtros y formularios.
 
 ---
 

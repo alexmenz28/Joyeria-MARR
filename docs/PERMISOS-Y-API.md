@@ -54,10 +54,11 @@ El frontend (`jwtRole.ts`) lee `role`, `Role` o el URI largo de .NET para mostra
 
 ### Públicos (sin token)
 
-- `GET /api/products` — Lista paginada de productos (catálogo / admin usa la misma forma).
+- `GET /api/products` — Lista paginada de productos (catálogo / admin usa la misma forma). Filtros: `category` (nombre exacto), **`material`** (nombre exacto de `Materials.Name`), `search`, `minPrice`, `maxPrice`, `inStockOnly`, `sortBy`.
 - `GET /api/products/{id}`
 - `GET /api/products/category/{name}`
 - `GET /api/categories` — Nombres de categoría.
+- `GET /api/materials` — Lista `{ id, name }` de materiales (referencia para filtros y formularios).
 - `POST /api/auth/register`, `POST /api/auth/login`
 
 ### Autenticado (cualquier rol)
@@ -81,7 +82,7 @@ El frontend (`jwtRole.ts`) lee `role`, `Role` o el URI largo de .NET para mostra
 - `GET /api/admin/sales/summary?months=12` — Informe de ventas: agregación mensual de `Order.Total` y número de pedidos (meses en calendario consecutivos, 1–36). Misma fuente que el gráfico del dashboard (últimos 6 meses en el panel).
 - `GET /api/orders` — Todos los pedidos (paginado).
 - `PATCH /api/orders/{id}/status`
-- `POST` / `PUT /api/products` — Crear / actualizar productos.
+- `POST` / `PUT /api/products` — Crear / actualizar productos (multipart: categoría por nombre, imagen en creación; campo opcional **`materialId`** numérico o vacío para quitar material; validar contra `GET /api/materials`).
 
 ### Solo **Admin**
 
@@ -108,7 +109,7 @@ Los listados paginados devuelven JSON en camelCase:
 ```
 
 Parámetros habituales: `page`, `pageSize` (máx. **100** en servidor en la mayoría de casos).  
-`GET /api/products` admite además `search`, `category`, `minPrice`, `maxPrice`, `inStockOnly`, `sortBy`.  
+`GET /api/products` admite además `search`, `category`, **`material`** (nombre exacto de un registro en `Materials`), `minPrice`, `maxPrice`, `inStockOnly`, `sortBy`.  
 `GET /api/orders` admite `search` (id numérico o texto en email/nombre).  
 `GET /api/admin/users` admite `page`, `pageSize` (máx. 100), `search` (email o nombre).
 

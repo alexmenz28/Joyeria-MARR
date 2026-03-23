@@ -19,7 +19,11 @@ public class OrderService : IOrderService
         return await _context.Orders
             .Include(o => o.OrderStatus)
             .Include(o => o.Lines)
-            .ThenInclude(l => l.Product)
+            .ThenInclude(l => l.Product!)
+            .ThenInclude(p => p.Category)
+            .Include(o => o.Lines)
+            .ThenInclude(l => l.Product!)
+            .ThenInclude(p => p.MaterialEntity)
             .Include(o => o.User)
             .FirstOrDefaultAsync(o => o.Id == id);
     }
@@ -88,8 +92,11 @@ public class OrderService : IOrderService
         var items = await filtered
             .Include(o => o.OrderStatus)
             .Include(o => o.Lines)
-            .ThenInclude(l => l.Product)
-            .ThenInclude(p => p!.Category)
+            .ThenInclude(l => l.Product!)
+            .ThenInclude(p => p.Category)
+            .Include(o => o.Lines)
+            .ThenInclude(l => l.Product!)
+            .ThenInclude(p => p.MaterialEntity)
             .OrderByDescending(o => o.OrderedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)

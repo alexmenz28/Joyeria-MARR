@@ -12,6 +12,7 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<Category> Categories => Set<Category>();
+    public DbSet<Material> Materials => Set<Material>();
     public DbSet<OrderStatus> OrderStatuses => Set<OrderStatus>();
     public DbSet<User> Users => Set<User>();
     public DbSet<Product> Products => Set<Product>();
@@ -50,12 +51,22 @@ public class ApplicationDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
+        modelBuilder.Entity<Material>(e =>
+        {
+            e.ToTable("Materials");
+            e.HasIndex(m => m.Name).IsUnique();
+        });
+
         modelBuilder.Entity<Product>(e =>
         {
             e.ToTable("Products");
             e.HasOne(p => p.Category)
                 .WithMany()
                 .HasForeignKey(p => p.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(p => p.MaterialEntity)
+                .WithMany()
+                .HasForeignKey(p => p.MaterialId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 

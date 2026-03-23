@@ -15,6 +15,7 @@ public static class DataSeeder
     {
         await SeedRolesAsync(context);
         await SeedCategoriesAsync(context);
+        await SeedMaterialsAsync(context);
         await SeedOrderStatusesAsync(context);
         await SeedUsersAsync(context);
         await SeedProductsAsync(context);
@@ -41,6 +42,24 @@ public static class DataSeeder
             .Select(n => new Category { Name = n })
             .ToArray();
         context.Categories.AddRange(categories);
+        await context.SaveChangesAsync();
+    }
+
+    private static async Task SeedMaterialsAsync(ApplicationDbContext context)
+    {
+        if (await context.Materials.AnyAsync())
+            return;
+
+        var names = new[]
+        {
+            "18K gold",
+            "14K gold",
+            "Sterling silver",
+            "Gold and diamonds",
+            "Silver with cubic zirconia",
+            "Other",
+        };
+        context.Materials.AddRange(names.Select(n => new Material { Name = n }));
         await context.SaveChangesAsync();
     }
 
@@ -110,10 +129,10 @@ public static class DataSeeder
             return;
 
         var categories = await context.Categories.ToListAsync();
+        var materialRows = await context.Materials.OrderBy(m => m.Id).ToListAsync();
         var catNames = new[] { "Rings", "Necklaces", "Bracelets", "Earrings", "Charms", "Sets" };
         var now = DateTime.UtcNow;
         var products = new List<Product>();
-        var materials = new[] { "18K gold", "14K gold", "Sterling silver", "Gold and diamonds", "Silver with cubic zirconia" };
 
         var names = new[]
         {
@@ -129,15 +148,15 @@ public static class DataSeeder
         {
             var catName = catNames[i % catNames.Length];
             var category = categories.First(c => c.Name == catName);
-            var mat = materials[i % materials.Length];
+            var matRow = materialRows[i % materialRows.Count];
             var price = 800m + (i * 120m) % 4200m;
             products.Add(new Product
             {
                 Name = names[i],
-                Description = $"Exclusive piece from the collection. {mat}. Elegant design for special occasions.",
+                Description = $"Exclusive piece from the collection. {matRow.Name}. Elegant design for special occasions.",
                 Price = price,
                 CategoryId = category.Id,
-                Material = mat,
+                MaterialId = matRow.Id,
                 Weight = i % 3 == 0 ? "2.5 g" : i % 3 == 1 ? "4.0 g" : "6.2 g",
                 IsAvailable = true,
                 Stock = 3 + (i % 5),

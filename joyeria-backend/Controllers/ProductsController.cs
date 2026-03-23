@@ -18,6 +18,28 @@ public class ProductsController : ControllerBase
         _productService = productService;
     }
 
+    private async Task<IActionResult?> ResolveMaterialIdForProductAsync(Product product)
+    {
+        if (!Request.HasFormContentType || !Request.Form.ContainsKey("materialId"))
+            return null;
+
+        var raw = Request.Form["materialId"].ToString();
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            product.MaterialId = null;
+            return null;
+        }
+
+        if (!int.TryParse(raw, out var id) || id <= 0)
+            return BadRequest(new { message = "Invalid materialId." });
+
+        if (!await _productService.MaterialExistsAsync(id))
+            return BadRequest(new { message = "Invalid material." });
+
+        product.MaterialId = id;
+        return null;
+    }
+
     /// <summary>Paged product list (catalog + admin). Max page size 100.</summary>
     [HttpGet]
     public async Task<ActionResult<PagedResult<Product>>> GetProducts([FromQuery] ProductListQuery query)
@@ -44,7 +66,7 @@ public class ProductsController : ControllerBase
 
     [Authorize(Roles = "Admin,Employee")]
     [HttpPost]
-    public async Task<ActionResult<Product>> Create([FromForm] Product product, [FromForm] string? category, IFormFile imagen)
+    public async Task<IActionResult> Create([FromForm] Product product, [FromForm] string? category, IFormFile imagen)
     {
         if (imagen == null)
             return BadRequest("Image is required.");
@@ -54,6 +76,10 @@ public class ProductsController : ControllerBase
             return BadRequest("Invalid category.");
 
         product.CategoryId = categoryId.Value;
+        var matErr = await ResolveMaterialIdForProductAsync(product);
+        if (matErr != null)
+            return matErr;
+
         var created = await _productService.CreateAsync(product, imagen);
         return CreatedAtAction(nameof(GetProduct), new { id = created.Id }, created);
     }
@@ -65,12 +91,25 @@ public class ProductsController : ControllerBase
         if (id != product.Id)
             return BadRequest();
 
+        var existing = await _productService.GetByIdAsync(id);
+        if (existing == null)
+            return NotFound();
+
         if (!string.IsNullOrEmpty(category))
         {
             var categoryId = await _productService.GetCategoryIdByNameAsync(category);
             if (categoryId != null)
                 product.CategoryId = categoryId.Value;
         }
+
+        if (Request.HasFormContentType && Request.Form.ContainsKey("materialId"))
+        {
+            var matErr = await ResolveMaterialIdForProductAsync(product);
+            if (matErr != null)
+                return matErr;
+        }
+        else
+            product.MaterialId = existing.MaterialId;
 
         await _productService.UpdateAsync(product, imagen);
         return NoContent();

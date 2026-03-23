@@ -30,18 +30,30 @@ public class ProductService : IProductService
 
     public async Task<Product?> GetByIdAsync(int id)
     {
-        return await _context.Products.Include(p => p.Category).FirstOrDefaultAsync(p => p.Id == id);
+        return await _context.Products
+            .Include(p => p.Category)
+            .Include(p => p.MaterialEntity)
+            .FirstOrDefaultAsync(p => p.Id == id);
     }
 
     public async Task<PagedResult<Product>> GetPagedAsync(ProductListQuery q)
     {
         var pageSize = Math.Clamp(q.PageSize, 1, 100);
-        var baseQuery = _context.Products.Include(p => p.Category).AsQueryable();
+        var baseQuery = _context.Products
+            .Include(p => p.Category)
+            .Include(p => p.MaterialEntity)
+            .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(q.Category))
         {
             var cat = q.Category.Trim();
             baseQuery = baseQuery.Where(p => p.Category.Name == cat);
+        }
+
+        if (!string.IsNullOrWhiteSpace(q.Material))
+        {
+            var mat = q.Material.Trim();
+            baseQuery = baseQuery.Where(p => p.MaterialEntity != null && p.MaterialEntity.Name == mat);
         }
 
         if (!string.IsNullOrWhiteSpace(q.Search))
@@ -50,7 +62,8 @@ public class ProductService : IProductService
             baseQuery = baseQuery.Where(p =>
                 p.Name.Contains(s) ||
                 p.Description.Contains(s) ||
-                p.Category.Name.Contains(s));
+                p.Category.Name.Contains(s) ||
+                (p.MaterialEntity != null && p.MaterialEntity.Name.Contains(s)));
         }
 
         if (q.MinPrice.HasValue)
@@ -100,10 +113,14 @@ public class ProductService : IProductService
         return cat?.Id;
     }
 
+    public async Task<bool> MaterialExistsAsync(int id) =>
+        await _context.Materials.AnyAsync(m => m.Id == id);
+
     public async Task<IEnumerable<Product>> GetByCategoryNameAsync(string categoryName)
     {
         return await _context.Products
             .Include(p => p.Category)
+            .Include(p => p.MaterialEntity)
             .Where(p => p.Category.Name == categoryName)
             .ToListAsync();
     }
@@ -115,7 +132,7 @@ public class ProductService : IProductService
 
         _context.Products.Add(product);
         await _context.SaveChangesAsync();
-        return product;
+        return await GetByIdAsync(product.Id) ?? product;
     }
 
     public async Task<Product> UpdateAsync(Product product, IFormFile? imagen = null)
@@ -128,7 +145,7 @@ public class ProductService : IProductService
         existing.Description = product.Description;
         existing.Price = product.Price;
         existing.CategoryId = product.CategoryId;
-        existing.Material = product.Material;
+        existing.MaterialId = product.MaterialId;
         existing.Weight = product.Weight;
         existing.IsAvailable = product.IsAvailable;
         existing.Stock = product.Stock;
@@ -138,7 +155,7 @@ public class ProductService : IProductService
             existing.ImageUrl = await UploadImageAsync(imagen);
 
         await _context.SaveChangesAsync();
-        return existing;
+        return await GetByIdAsync(existing.Id) ?? existing;
     }
 
     public async Task DeleteAsync(int id)

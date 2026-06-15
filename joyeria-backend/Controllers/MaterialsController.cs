@@ -1,6 +1,5 @@
-using JoyeriaBackend.Data;
+using JoyeriaBackend.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace JoyeriaBackend.Controllers;
 
@@ -8,21 +7,18 @@ namespace JoyeriaBackend.Controllers;
 [Route("api/materials")]
 public class MaterialsController : ControllerBase
 {
-    private readonly ApplicationDbContext _context;
+    private readonly ICatalogService _catalogService;
 
-    public MaterialsController(ApplicationDbContext context)
+    public MaterialsController(ICatalogService catalogService)
     {
-        _context = context;
+        _catalogService = catalogService;
     }
 
     /// <summary>All materials for catalog filters and admin product forms (id + name).</summary>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<object>>> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult<IEnumerable<MaterialRefDto>>> GetAll(CancellationToken cancellationToken)
     {
-        var list = await _context.Materials.AsNoTracking()
-            .OrderBy(m => m.Name)
-            .Select(m => new { m.Id, m.Name })
-            .ToListAsync(cancellationToken);
+        var list = await _catalogService.GetMaterialsAsync(cancellationToken);
         return Ok(list);
     }
 }

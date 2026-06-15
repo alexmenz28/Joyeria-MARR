@@ -1,11 +1,13 @@
-using JoyeriaBackend.Services;
 using JoyeriaBackend.DTOs;
+using JoyeriaBackend.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace JoyeriaBackend.Controllers;
 
 [Route("api/auth")]
 [ApiController]
+[EnableRateLimiting("auth")]
 public class AuthController : ControllerBase
 {
     private readonly IUserService _userService;
@@ -23,7 +25,7 @@ public class AuthController : ControllerBase
 
         var result = await _userService.Register(registerDto);
         if (!result.Success)
-            return BadRequest(new { message = result.Message });
+            return BadRequest(new ApiErrorResponse { Error = result.Message, Code = "BUSINESS_ERROR" });
 
         return Ok(new { message = result.Message });
     }
@@ -36,7 +38,7 @@ public class AuthController : ControllerBase
 
         var result = await _userService.Login(loginDto);
         if (!result.Success)
-            return Unauthorized(new { message = result.Message });
+            return Unauthorized(new ApiErrorResponse { Error = result.Message, Code = "UNAUTHORIZED" });
 
         return Ok(new { token = result.Token });
     }

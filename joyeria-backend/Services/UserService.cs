@@ -60,7 +60,8 @@ public class UserService : IUserService
 
     public async Task<AuthResult> Register(RegisterDto registerDto)
     {
-        var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == registerDto.Email);
+        var email = registerDto.Email.Trim().ToLowerInvariant();
+        var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
         if (existingUser != null)
         {
             return new AuthResult
@@ -76,8 +77,8 @@ public class UserService : IUserService
 
         var user = new User
         {
-            FirstName = registerDto.Name,
-            Email = registerDto.Email,
+            FirstName = registerDto.Name.Trim(),
+            Email = email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password),
             RoleId = customerRole.Id,
             LastName = string.Empty
@@ -94,7 +95,8 @@ public class UserService : IUserService
 
     public async Task<AuthResult> Login(LoginDto loginDto)
     {
-        var user = await _context.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.Email == loginDto.Email);
+        var email = loginDto.Email.Trim().ToLowerInvariant();
+        var user = await _context.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.Email == email);
         if (user == null)
         {
             return new AuthResult

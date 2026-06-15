@@ -111,4 +111,12 @@ Content-Type: application/json
   "status": "In Progress"
 }
 
+### Order statuses — Admin / Employee
+GET {{JoyeriaBackend_HostAddress}}/api/order-statuses
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Health check
+GET {{JoyeriaBackend_HostAddress}}/health
+
 ###

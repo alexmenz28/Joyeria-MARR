@@ -1,11 +1,13 @@
 using JoyeriaBackend.Data;
 using JoyeriaBackend.DTOs;
+using JoyeriaBackend.Mapping;
 using JoyeriaBackend.Models;
 using Microsoft.EntityFrameworkCore;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace JoyeriaBackend.Services;
 
@@ -13,14 +15,20 @@ public class ProductService : IProductService
 {
     private readonly ApplicationDbContext _context;
     private readonly Cloudinary _cloudinary;
-    private readonly IConfiguration _configuration;
+    private readonly IFileValidationService _fileValidation;
+    private readonly ILogger<ProductService> _logger;
 
-    public ProductService(ApplicationDbContext context, IConfiguration configuration)
+    public ProductService(
+        ApplicationDbContext context,
+        IConfiguration configuration,
+        IFileValidationService fileValidation,
+        ILogger<ProductService> logger)
     {
         _context = context;
-        _configuration = configuration;
+        _fileValidation = fileValidation;
+        _logger = logger;
 
-        var cloudinarySettings = _configuration.GetSection("CloudinarySettings");
+        var cloudinarySettings = configuration.GetSection("CloudinarySettings");
         var account = new Account(
             cloudinarySettings["CloudName"] ?? throw new ArgumentNullException("CloudName"),
             cloudinarySettings["ApiKey"] ?? throw new ArgumentNullException("ApiKey"),
@@ -28,21 +36,146 @@ public class ProductService : IProductService
         _cloudinary = new Cloudinary(account);
     }
 
-    public async Task<Product?> GetByIdAsync(int id)
+    public async Task<ProductDto?> GetByIdAsync(int id)
     {
-        return await _context.Products
-            .Include(p => p.Category)
-            .Include(p => p.MaterialEntity)
-            .FirstOrDefaultAsync(p => p.Id == id);
+        var product = await QueryWithIncludes().FirstOrDefaultAsync(p => p.Id == id);
+        return product?.ToDto();
     }
 
-    public async Task<PagedResult<Product>> GetPagedAsync(ProductListQuery q)
+    public async Task<PagedResult<ProductDto>> GetPagedAsync(ProductListQuery q) =>
+        await BuildPagedQuery(q);
+
+    public async Task<PagedResult<ProductDto>> GetByCategoryNamePagedAsync(string categoryName, PagedQuery query)
+    {
+        var listQuery = new ProductListQuery
+        {
+            Category = categoryName,
+            Page = query.Page,
+            PageSize = query.PageSize,
+        };
+        return await BuildPagedQuery(listQuery);
+    }
+
+    public async Task<int?> GetCategoryIdByNameAsync(string name)
+    {
+        var cat = await _context.Categories.FirstOrDefaultAsync(c => c.Name == name);
+        return cat?.Id;
+    }
+
+    public async Task<bool> MaterialExistsAsync(int id) =>
+        await _context.Materials.AnyAsync(m => m.Id == id);
+
+    public async Task<ProductDto> CreateAsync(CreateProductDto dto)
+    {
+        _fileValidation.ValidateImage(dto.Imagen);
+
+        var categoryId = await GetCategoryIdByNameAsync(dto.Category)
+            ?? throw new ArgumentException("Invalid category.");
+
+        if (dto.MaterialId.HasValue && dto.MaterialId > 0 && !await MaterialExistsAsync(dto.MaterialId.Value))
+            throw new ArgumentException("Invalid material.");
+
+        var imageUrl = await UploadImageAsync(dto.Imagen);
+        var now = DateTime.UtcNow;
+
+        var product = new Product
+        {
+            Name = dto.Name.Trim(),
+            Description = dto.Description.Trim(),
+            Price = dto.Price,
+            CategoryId = categoryId,
+            MaterialId = dto.MaterialId is > 0 ? dto.MaterialId : null,
+            Weight = string.IsNullOrWhiteSpace(dto.Weight) ? null : dto.Weight.Trim(),
+            IsAvailable = dto.IsAvailable,
+            Stock = dto.Stock,
+            ImageUrl = imageUrl,
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+
+        _context.Products.Add(product);
+        await _context.SaveChangesAsync();
+
+        return (await GetByIdAsync(product.Id))!;
+    }
+
+    public async Task<ProductDto> UpdateAsync(int id, UpdateProductDto dto)
+    {
+        var existing = await _context.Products.FindAsync(id)
+            ?? throw new KeyNotFoundException($"Product with ID {id} was not found.");
+
+        if (!string.IsNullOrWhiteSpace(dto.Category))
+        {
+            var categoryId = await GetCategoryIdByNameAsync(dto.Category);
+            if (categoryId == null)
+                throw new ArgumentException("Invalid category.");
+            existing.CategoryId = categoryId.Value;
+        }
+
+        if (dto.ClearMaterial)
+            existing.MaterialId = null;
+        else if (dto.MaterialId.HasValue)
+        {
+            if (dto.MaterialId > 0)
+            {
+                if (!await MaterialExistsAsync(dto.MaterialId.Value))
+                    throw new ArgumentException("Invalid material.");
+                existing.MaterialId = dto.MaterialId;
+            }
+            else
+                existing.MaterialId = null;
+        }
+
+        existing.Name = dto.Name.Trim();
+        existing.Description = dto.Description.Trim();
+        existing.Price = dto.Price;
+        existing.Weight = string.IsNullOrWhiteSpace(dto.Weight) ? null : dto.Weight.Trim();
+        existing.IsAvailable = dto.IsAvailable;
+        existing.Stock = dto.Stock;
+        existing.UpdatedAt = DateTime.UtcNow;
+
+        if (dto.Imagen != null)
+        {
+            _fileValidation.ValidateImage(dto.Imagen);
+            var oldUrl = existing.ImageUrl;
+            existing.ImageUrl = await UploadImageAsync(dto.Imagen);
+            await TryDeleteImageByUrlAsync(oldUrl);
+        }
+        else if (!string.IsNullOrWhiteSpace(dto.ImageUrl))
+            existing.ImageUrl = dto.ImageUrl;
+
+        await _context.SaveChangesAsync();
+        return (await GetByIdAsync(existing.Id))!;
+    }
+
+    public async Task<bool> DeleteAsync(int id)
+    {
+        var product = await _context.Products.FindAsync(id);
+        if (product == null)
+            return false;
+
+        var hasActiveLines = await _context.OrderLines.AnyAsync(l => l.ProductId == id);
+        if (hasActiveLines)
+        {
+            product.IsDeleted = true;
+            product.IsAvailable = false;
+            product.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Soft-deleted product {ProductId} (referenced in orders)", id);
+            return true;
+        }
+
+        await TryDeleteImageByUrlAsync(product.ImageUrl);
+        _context.Products.Remove(product);
+        await _context.SaveChangesAsync();
+        _logger.LogInformation("Hard-deleted product {ProductId}", id);
+        return true;
+    }
+
+    private async Task<PagedResult<ProductDto>> BuildPagedQuery(ProductListQuery q)
     {
         var pageSize = Math.Clamp(q.PageSize, 1, 100);
-        var baseQuery = _context.Products
-            .Include(p => p.Category)
-            .Include(p => p.MaterialEntity)
-            .AsQueryable();
+        var baseQuery = QueryWithIncludes();
 
         if (!string.IsNullOrWhiteSpace(q.Category))
         {
@@ -76,7 +209,6 @@ public class ProductService : IProductService
             baseQuery = baseQuery.Where(p => p.IsAvailable || p.Stock > 0);
 
         var totalCount = await baseQuery.CountAsync();
-
         var totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)pageSize));
         var page = Math.Clamp(q.Page < 1 ? 1 : q.Page, 1, totalPages);
         if (totalCount == 0)
@@ -98,92 +230,67 @@ public class ProductService : IProductService
             .Take(pageSize)
             .ToListAsync();
 
-        return new PagedResult<Product>
+        return new PagedResult<ProductDto>
         {
-            Items = items,
+            Items = items.Select(p => p.ToDto()).ToList(),
             TotalCount = totalCount,
             Page = page,
             PageSize = pageSize,
         };
     }
 
-    public async Task<int?> GetCategoryIdByNameAsync(string name)
-    {
-        var cat = await _context.Categories.FirstOrDefaultAsync(c => c.Name == name);
-        return cat?.Id;
-    }
-
-    public async Task<bool> MaterialExistsAsync(int id) =>
-        await _context.Materials.AnyAsync(m => m.Id == id);
-
-    public async Task<IEnumerable<Product>> GetByCategoryNameAsync(string categoryName)
-    {
-        return await _context.Products
+    private IQueryable<Product> QueryWithIncludes() =>
+        _context.Products
             .Include(p => p.Category)
-            .Include(p => p.MaterialEntity)
-            .Where(p => p.Category.Name == categoryName)
-            .ToListAsync();
-    }
+            .Include(p => p.MaterialEntity);
 
-    public async Task<Product> CreateAsync(Product product, IFormFile? imagen)
+    private async Task<string> UploadImageAsync(IFormFile imagen)
     {
-        if (imagen != null)
-            product.ImageUrl = await UploadImageAsync(imagen);
-
-        _context.Products.Add(product);
-        await _context.SaveChangesAsync();
-        return await GetByIdAsync(product.Id) ?? product;
-    }
-
-    public async Task<Product> UpdateAsync(Product product, IFormFile? imagen = null)
-    {
-        var existing = await _context.Products.FindAsync(product.Id);
-        if (existing == null)
-            throw new KeyNotFoundException($"Product with ID {product.Id} not found.");
-
-        existing.Name = product.Name;
-        existing.Description = product.Description;
-        existing.Price = product.Price;
-        existing.CategoryId = product.CategoryId;
-        existing.MaterialId = product.MaterialId;
-        existing.Weight = product.Weight;
-        existing.IsAvailable = product.IsAvailable;
-        existing.Stock = product.Stock;
-        existing.UpdatedAt = DateTime.UtcNow;
-
-        if (imagen != null)
-            existing.ImageUrl = await UploadImageAsync(imagen);
-
-        await _context.SaveChangesAsync();
-        return await GetByIdAsync(existing.Id) ?? existing;
-    }
-
-    public async Task DeleteAsync(int id)
-    {
-        var product = await _context.Products.FindAsync(id);
-        if (product != null)
+        using var stream = imagen.OpenReadStream();
+        var uploadParams = new ImageUploadParams
         {
-            _context.Products.Remove(product);
-            await _context.SaveChangesAsync();
-        }
-    }
-
-    public async Task<string> UploadImageAsync(IFormFile imagen)
-    {
-        if (imagen == null || imagen.Length == 0)
-            throw new ArgumentException("Image cannot be null or empty.");
-
-        var uploadResult = new ImageUploadResult();
-        using (var stream = imagen.OpenReadStream())
-        {
-            var uploadParams = new ImageUploadParams()
-            {
-                File = new FileDescription(imagen.FileName, stream),
-                Transformation = new Transformation().Height(500).Width(500).Crop("fill").Gravity("face")
-            };
-            uploadResult = await _cloudinary.UploadAsync(uploadParams);
-        }
-
+            File = new FileDescription(imagen.FileName, stream),
+            Transformation = new Transformation().Height(500).Width(500).Crop("fill").Gravity("face"),
+        };
+        var uploadResult = await _cloudinary.UploadAsync(uploadParams);
         return uploadResult.Url.ToString();
+    }
+
+    private async Task TryDeleteImageByUrlAsync(string? imageUrl)
+    {
+        var publicId = ExtractPublicId(imageUrl);
+        if (publicId == null)
+            return;
+
+        try
+        {
+            await _cloudinary.DestroyAsync(new DeletionParams(publicId));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not delete Cloudinary image {PublicId}", publicId);
+        }
+    }
+
+    internal static string? ExtractPublicId(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            return null;
+
+        const string marker = "/upload/";
+        var idx = url.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+        if (idx < 0)
+            return null;
+
+        var after = url[(idx + marker.Length)..];
+        if (after.StartsWith('v') && after.Length > 1)
+        {
+            var slash = after.IndexOf('/');
+            if (slash > 0 && after[1..slash].All(char.IsDigit))
+                after = after[(slash + 1)..];
+        }
+
+        var dot = after.LastIndexOf('.');
+        return dot > 0 ? after[..dot] : after;
     }
 }

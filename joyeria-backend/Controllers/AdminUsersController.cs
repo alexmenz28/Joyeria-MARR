@@ -1,4 +1,4 @@
-using System.Security.Claims;
+using JoyeriaBackend.Extensions;
 using JoyeriaBackend.DTOs;
 using JoyeriaBackend.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -18,12 +18,6 @@ public class AdminUsersController : ControllerBase
         _userService = userService;
     }
 
-    private int? GetCurrentUserId()
-    {
-        var v = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        return int.TryParse(v, out var id) ? id : null;
-    }
-
     /// <summary>Paged user list (no passwords). Admin only.</summary>
     [HttpGet]
     public async Task<ActionResult<PagedResult<UserListItemDto>>> GetUsers([FromQuery] UserListQuery query)
@@ -39,13 +33,13 @@ public class AdminUsersController : ControllerBase
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var actorId = GetCurrentUserId();
+        var actorId = User.GetUserId();
         if (actorId == null)
             return Unauthorized();
 
         var (user, error) = await _userService.UpdateUserAdminAsync(id, dto, actorId.Value);
         if (error != null)
-            return BadRequest(new { message = error });
+            return BadRequest(new ApiErrorResponse { Error = error, Code = "BUSINESS_ERROR" });
 
         return Ok(user);
     }

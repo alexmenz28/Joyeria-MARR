@@ -60,6 +60,10 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<Product>(e =>
         {
             e.ToTable("Products");
+            e.HasQueryFilter(p => !p.IsDeleted);
+            e.HasIndex(p => p.CategoryId);
+            e.HasIndex(p => p.MaterialId);
+            e.Property(p => p.StockVersion).IsConcurrencyToken();
             e.HasOne(p => p.Category)
                 .WithMany()
                 .HasForeignKey(p => p.CategoryId)
@@ -73,6 +77,7 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<Order>(e =>
         {
             e.ToTable("Orders");
+            e.HasIndex(o => o.OrderedAt);
             e.HasOne(o => o.User)
                 .WithMany()
                 .HasForeignKey(o => o.UserId)
@@ -93,7 +98,7 @@ public class ApplicationDbContext : DbContext
             e.HasOne(l => l.Product)
                 .WithMany()
                 .HasForeignKey(l => l.ProductId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

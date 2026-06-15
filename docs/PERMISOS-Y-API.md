@@ -59,7 +59,8 @@ El frontend (`jwtRole.ts`) lee `role`, `Role` o el URI largo de .NET para mostra
 - `GET /api/products/category/{name}`
 - `GET /api/categories` — Nombres de categoría.
 - `GET /api/materials` — Lista `{ id, name }` de materiales (referencia para filtros y formularios).
-- `POST /api/auth/register`, `POST /api/auth/login`
+- `GET /api/order-statuses` — Estados de pedido para el panel admin (**Admin** / **Employee**).
+- `POST /api/auth/register`, `POST /api/auth/login` — Rate limit: 10 peticiones/minuto por cliente.
 
 ### Autenticado (cualquier rol)
 
@@ -78,16 +79,16 @@ El frontend (`jwtRole.ts`) lee `role`, `Role` o el URI largo de .NET para mostra
 
 ### **Admin** y **Employee**
 
-- `GET /api/admin/stats` — Resumen del panel: conteos (productos, pedidos, clientes, usuarios), suma de `Order.Total`, últimos 5 pedidos (sin datos sensibles).
-- `GET /api/admin/sales/summary?months=12` — Informe de ventas: agregación mensual de `Order.Total` y número de pedidos (meses en calendario consecutivos, 1–36). Misma fuente que el gráfico del dashboard (últimos 6 meses en el panel).
+- `GET /api/admin/stats` — Resumen del panel: conteos (productos, pedidos, clientes, usuarios), **ingresos solo de pedidos Completed**, últimos 5 pedidos.
+- `GET /api/admin/sales/summary?months=12` — Informe de ventas: **ingresos mensuales solo de pedidos Completed**; conteo de pedidos incluye todos los estados.
 - `GET /api/orders` — Todos los pedidos (paginado).
-- `PATCH /api/orders/{id}/status`
-- `POST` / `PUT /api/products` — Crear / actualizar productos (multipart: categoría por nombre, imagen en creación; campo opcional **`materialId`** numérico o vacío para quitar material; validar contra `GET /api/materials`).
+- `PATCH /api/orders/{id}/status` — Al pasar a **Cancelled** se restaura el stock de líneas de catálogo.
+- `POST` / `PUT /api/products` — Crear / actualizar productos (multipart: categoría por nombre, imagen en creación; campo opcional **`materialId`** numérico o vacío para quitar material).
 
 ### Solo **Admin**
 
-- `DELETE /api/products/{id}`
-- `DELETE /api/orders/{id}`
+- `DELETE /api/products/{id}` — Soft-delete si tiene pedidos; borrado físico si no. Elimina imagen en Cloudinary cuando aplica.
+- `DELETE /api/orders/{id}` — Restaura stock si el pedido no estaba cancelado.
 - `GET /api/admin/users` — Listado paginado de usuarios (`page`, `pageSize`, `search` opcional).
 - `PATCH /api/admin/users/{id}` — Cuerpo JSON opcional: `roleId`, `isActive` (al menos uno). Reglas: no desactivar el propio usuario; no cambiar el propio rol fuera de Admin; no dejar sin administrador activo al desactivar o bajar de rol al último admin. Las cuentas inactivas no pueden iniciar sesión.
 - `GET /api/admin/roles` — Lista de roles para desplegables en la UI.

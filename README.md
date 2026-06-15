@@ -7,15 +7,16 @@ Sistema de gestión para joyería: backend en ASP.NET Core y frontend en React (
 ## Estructura del proyecto
 
 ```
-joyeria-backend/     Backend API (ASP.NET Core, EF Core, SQL Server)
-joyeria-frontend/   SPA (React, React Router, Tailwind CSS)
+joyeria-backend/          Backend API (ASP.NET Core, EF Core, SQL Server)
+joyeria-frontend/         SPA (React, React Router, Tailwind CSS)
+JoyeriaBackend.Tests/     Tests de integración (xUnit)
 ```
 
 ---
 
 ## Requisitos
 
-- .NET 9 SDK o superior
+- .NET 10 SDK
 - Node.js 18.x o superior
 - SQL Server
 - Cuenta en Cloudinary (imágenes)
@@ -38,6 +39,16 @@ dotnet ef database update
 dotnet run
 ```
 
+API en desarrollo: `http://localhost:5053` · Health check: `GET /health` · Swagger: `/swagger` (solo Development).
+
+**Docker (backend):** desde la raíz del repo, `docker build -f joyeria-backend/Dockerfile -t joyeria-api .`
+
+### Tests del backend
+
+```bash
+dotnet test JoyeriaBackend.Tests/JoyeriaBackend.Tests.csproj
+```
+
 ### Frontend
 
 ```bash
@@ -55,7 +66,7 @@ npm start
 
 ## Características
 
-- **Backend:** API REST, autenticación JWT, Entity Framework Core con SQL Server, Swagger, Cloudinary, roles (**Admin**, **Employee**, **Customer**), catálogo con **categorías y materiales normalizados** (`Materials` + `MaterialId` en productos).
+- **Backend:** API REST con **DTOs** de entrada/salida, autenticación JWT (rate limit en `/api/auth/*`), Entity Framework Core con SQL Server, **transacciones y concurrencia de stock**, soft-delete de productos, Swagger con JWT, Cloudinary (validación de imágenes), **health check**, roles (**Admin**, **Employee**, **Customer**), catálogo con categorías y materiales normalizados.
 - **Frontend:** React, React Router (navegación SPA), Tailwind CSS, modo claro/oscuro (por defecto claro), **carrito** (localStorage) y **checkout** para clientes, **pedido personalizado**, **perfil y cambio de contraseña**, catálogo con **paginación en servidor**, “mis pedidos”, panel admin en **inglés** con layout unificado (hero + contenedor ancho fijo), dashboard con KPIs y **gráfico de ventas mensuales** (API real, USD/`en-US`), **gestión de usuarios** (solo Admin), **informe de ventas** (Admin y Employee).
 
 ---
@@ -74,7 +85,7 @@ Detalle de endpoints JWT y troubleshooting: **[`docs/PERMISOS-Y-API.md`](docs/PE
 
 ## Datos de prueba
 
-Si la base de datos está vacía, al arrancar el backend se insertan automáticamente 3 usuarios (Admin, Empleado, Cliente) y un listado de productos de ejemplo. Contraseña común para los tres usuarios: **`Test123!`**
+Si la base de datos está vacía, al arrancar el backend en **Development** se insertan automáticamente usuarios y productos de ejemplo. Contraseña común: **`Test123!`**
 
 | Rol        | Email                    |
 |------------|--------------------------|
@@ -88,7 +99,9 @@ Si la base de datos está vacía, al arrancar el backend se insertan automática
 
 ## Seguridad
 
-<!-- Rellenar: no subir appsettings.json ni .env; usar User Secrets / variables de entorno; rotar credenciales si se expusieron. Ver docs si existen. -->
+- No subir `appsettings.json` ni `.env` al repositorio; usar `appsettings.Example.json`, User Secrets o variables de entorno.
+- Configurar `Cors:AllowedOrigins` en producción.
+- Rotar `JwtSettings:Key` y credenciales de Cloudinary si se expusieron.
 
 ---
 

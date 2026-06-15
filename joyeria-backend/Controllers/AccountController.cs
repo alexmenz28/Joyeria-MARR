@@ -1,5 +1,5 @@
-using System.Security.Claims;
 using JoyeriaBackend.DTOs;
+using JoyeriaBackend.Extensions;
 using JoyeriaBackend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,16 +18,10 @@ public class AccountController : ControllerBase
         _userService = userService;
     }
 
-    private int? GetUserId()
-    {
-        var v = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        return int.TryParse(v, out var id) ? id : null;
-    }
-
     [HttpGet("me")]
     public async Task<ActionResult<UserProfileDto>> GetMe()
     {
-        var id = GetUserId();
+        var id = User.GetUserId();
         if (id == null)
             return Unauthorized();
 
@@ -41,7 +35,7 @@ public class AccountController : ControllerBase
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var id = GetUserId();
+        var id = User.GetUserId();
         if (id == null)
             return Unauthorized();
 
@@ -55,13 +49,13 @@ public class AccountController : ControllerBase
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var id = GetUserId();
+        var id = User.GetUserId();
         if (id == null)
             return Unauthorized();
 
         var (ok, error) = await _userService.ChangePasswordAsync(id.Value, dto);
         if (!ok)
-            return BadRequest(new { message = error ?? "Could not change password." });
+            return BadRequest(new ApiErrorResponse { Error = error ?? "Could not change password.", Code = "VALIDATION_ERROR" });
 
         return NoContent();
     }

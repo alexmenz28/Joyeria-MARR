@@ -1,8 +1,7 @@
-using JoyeriaBackend.Data;
 using JoyeriaBackend.DTOs;
+using JoyeriaBackend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace JoyeriaBackend.Controllers;
 
@@ -11,21 +10,18 @@ namespace JoyeriaBackend.Controllers;
 [Authorize(Roles = "Admin")]
 public class AdminRolesController : ControllerBase
 {
-    private readonly ApplicationDbContext _db;
+    private readonly ICatalogService _catalogService;
 
-    public AdminRolesController(ApplicationDbContext db)
+    public AdminRolesController(ICatalogService catalogService)
     {
-        _db = db;
+        _catalogService = catalogService;
     }
 
     /// <summary>Roles for admin user-management dropdowns.</summary>
     [HttpGet]
     public async Task<ActionResult<List<RoleOptionDto>>> GetRoles(CancellationToken cancellationToken)
     {
-        var list = await _db.Roles.AsNoTracking()
-            .OrderBy(r => r.Name)
-            .Select(r => new RoleOptionDto { Id = r.Id, Name = r.Name })
-            .ToListAsync(cancellationToken);
+        var list = await _catalogService.GetRolesAsync(cancellationToken);
         return Ok(list);
     }
 }

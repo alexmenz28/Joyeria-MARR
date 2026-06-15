@@ -18,8 +18,6 @@ public class User
     [EmailAddress]
     public required string Email { get; set; }
 
-    /// <summary>Never serialized to JSON. Not marked <c>required</c> to avoid a System.Text.Json contract error with <see cref="JsonIgnoreAttribute"/> (.NET 9+).</summary>
-    [Required]
     [JsonIgnore]
     public string PasswordHash { get; set; } = null!;
 

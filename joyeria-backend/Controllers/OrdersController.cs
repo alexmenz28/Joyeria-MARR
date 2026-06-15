@@ -1,6 +1,5 @@
-using System.Security.Claims;
 using JoyeriaBackend.DTOs;
-using JoyeriaBackend.Models;
+using JoyeriaBackend.Extensions;
 using JoyeriaBackend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,17 +18,11 @@ public class OrdersController : ControllerBase
         _orderService = orderService;
     }
 
-    private int? GetCurrentUserId()
-    {
-        var v = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        return int.TryParse(v, out var id) ? id : null;
-    }
-
     /// <summary>Orders for the authenticated user (paged, with lines). Max page size 100.</summary>
     [HttpGet("my")]
-    public async Task<ActionResult<PagedResult<Order>>> GetMyOrders([FromQuery] PagedQuery query)
+    public async Task<ActionResult<PagedResult<OrderDetailDto>>> GetMyOrders([FromQuery] PagedQuery query)
     {
-        var userId = GetCurrentUserId();
+        var userId = User.GetUserId();
         if (userId == null)
             return Unauthorized();
 
@@ -38,9 +31,9 @@ public class OrdersController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<Order>> GetById(int id)
+    public async Task<ActionResult<OrderDetailDto>> GetById(int id)
     {
-        var userId = GetCurrentUserId();
+        var userId = User.GetUserId();
         if (userId == null)
             return Unauthorized();
 
@@ -60,54 +53,46 @@ public class OrdersController : ControllerBase
     /// <summary>All orders (admin / staff), paged. Max page size 100.</summary>
     [HttpGet]
     [Authorize(Roles = "Admin,Employee")]
-    public async Task<ActionResult<PagedResult<Order>>> GetAll([FromQuery] OrderListQuery query)
+    public async Task<ActionResult<PagedResult<OrderSummaryDto>>> GetAll([FromQuery] OrderListQuery query)
     {
         var result = await _orderService.GetOrdersPagedAsync(query);
         return Ok(result);
     }
 
-    /// <summary>Place an order (catalog lines only). Decrements stock.</summary>
+    /// <summary>Place an order (catalog and/or custom lines). Decrements stock for catalog items.</summary>
     [HttpPost]
     [Authorize(Roles = "Customer")]
-    public async Task<ActionResult<Order>> Create([FromBody] CreateOrderDto dto)
+    public async Task<ActionResult<OrderDetailDto>> Create([FromBody] CreateOrderDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var userId = GetCurrentUserId();
+        var userId = User.GetUserId();
         if (userId == null)
             return Unauthorized();
 
-        try
-        {
-            var order = await _orderService.CreateOrderForUserAsync(userId.Value, dto);
-            return CreatedAtAction(nameof(GetById), new { id = order.Id }, order);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        var order = await _orderService.CreateOrderForUserAsync(userId.Value, dto);
+        return CreatedAtAction(nameof(GetById), new { id = order.Id }, order);
     }
 
     [HttpPatch("{id:int}/status")]
     [Authorize(Roles = "Admin,Employee")]
-    public async Task<ActionResult<Order>> UpdateStatus(int id, [FromBody] UpdateOrderStatusDto dto)
+    public async Task<ActionResult<OrderDetailDto>> UpdateStatus(int id, [FromBody] UpdateOrderStatusDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
         var updated = await _orderService.UpdateStatusAsync(id, dto.Status);
-        if (updated == null)
-            return NotFound(new { message = "Order or status not found." });
-
-        return Ok(updated);
+        return updated == null
+            ? NotFound(new ApiErrorResponse { Error = "Order or status not found.", Code = "NOT_FOUND" })
+            : Ok(updated);
     }
 
     [HttpDelete("{id:int}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(int id)
     {
-        await _orderService.DeleteAsync(id);
-        return NoContent();
+        var deleted = await _orderService.DeleteAsync(id);
+        return deleted ? NoContent() : NotFound();
     }
 }

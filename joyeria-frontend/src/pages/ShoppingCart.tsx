@@ -1,35 +1,52 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Store } from 'lucide-react';
-import { jwtDecode } from 'jwt-decode';
 import RevealSection from '../components/common/RevealSection';
 import { Helmet } from 'react-helmet-async';
 import api from '../utils/api';
 import { useCart } from '../context/CartContext';
-import { getJwtRole, isCustomer } from '../utils/jwtRole';
+import type { CartItem } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import { isCustomer } from '../utils/jwtRole';
+import { getApiErrorMessage } from '../utils/apiErrors';
+import { fetchProductsByIds, mergeCartWithProducts } from '../utils/cartStock';
 
 const ShoppingCart = () => {
-  const { items, setQuantity, removeItem, clearCart, subtotal } = useCart();
+  const { items, setQuantity, removeItem, clearCart, replaceItems, subtotal } = useCart();
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [stockNotice, setStockNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { isAuthenticated, role } = useAuth();
 
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  const role = useMemo(() => {
-    if (!token) return undefined;
+  const syncCartStock = useCallback(async (): Promise<CartItem[]> => {
+    if (items.length === 0) return [];
+    setSyncing(true);
     try {
-      return getJwtRole(jwtDecode<Record<string, unknown>>(token));
-    } catch {
-      return undefined;
+      const products = await fetchProductsByIds(items.map((i) => i.productId));
+      const { items: synced, warnings } = mergeCartWithProducts(items, products);
+      replaceItems(synced);
+      setStockNotice(warnings.length > 0 ? warnings.join(' ') : null);
+      return synced;
+    } finally {
+      setSyncing(false);
     }
-  }, [token]);
+  }, [items, replaceItems]);
+
+  useEffect(() => {
+    if (items.length > 0) void syncCartStock();
+    // Only on mount / when cart line ids change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items.map((i) => i.productId).join(',')]);
 
   const handleCheckout = async () => {
     setError(null);
+    setStockNotice(null);
     if (items.length === 0) return;
 
-    if (!token) {
+    if (!isAuthenticated) {
       navigate('/login?from=/cart');
       return;
     }
@@ -43,9 +60,15 @@ const ShoppingCart = () => {
 
     setSubmitting(true);
     try {
+      const synced = await syncCartStock();
+      if (synced.length === 0) {
+        setError('Your cart is empty or items are no longer available.');
+        return;
+      }
+
       await api.post('/api/orders', {
         notes: notes.trim() || undefined,
-        lines: items.map((i) => ({
+        lines: synced.map((i) => ({
           productId: i.productId,
           quantity: i.quantity,
         })),
@@ -54,11 +77,11 @@ const ShoppingCart = () => {
       setNotes('');
       navigate('/orders');
     } catch (err: unknown) {
-      const msg =
-        err && typeof err === 'object' && 'response' in err
-          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-          : undefined;
-      setError(typeof msg === 'string' ? msg : 'Could not place order. Check stock and try again.');
+      const msg = getApiErrorMessage(err, 'Could not place order. Check stock and try again.');
+      setError(msg);
+      if (/stock|retry|another request/i.test(msg)) {
+        void syncCartStock();
+      }
     } finally {
       setSubmitting(false);
     }
@@ -175,13 +198,19 @@ const ShoppingCart = () => {
                   className="mb-4 w-full rounded-lg border border-gold-200 dark:border-gold-500/30 bg-white dark:bg-night-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
                 />
 
+                {stockNotice && (
+                  <div className="mb-4 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 text-sm text-amber-800 dark:text-amber-200">
+                    {stockNotice}
+                  </div>
+                )}
+
                 {error && (
                   <div className="mb-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-3 py-2 text-sm text-red-700 dark:text-red-300">
                     {error}
                   </div>
                 )}
 
-                {!token && (
+                {!isAuthenticated && (
                   <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
                     <Link to="/login?from=/cart" className="font-medium text-gold-600 dark:text-gold-400">
                       Sign in
@@ -197,10 +226,10 @@ const ShoppingCart = () => {
                 <button
                   type="button"
                   onClick={handleCheckout}
-                  disabled={submitting}
+                  disabled={submitting || syncing}
                   className="w-full rounded-lg bg-gold-500 py-3 font-semibold text-white shadow hover:bg-gold-600 disabled:opacity-50 transition-colors"
                 >
-                  {submitting ? 'Placing order…' : 'Place order'}
+                  {submitting ? 'Placing order…' : syncing ? 'Checking stock…' : 'Place order'}
                 </button>
 
                 <button

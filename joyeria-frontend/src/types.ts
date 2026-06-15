@@ -1,3 +1,9 @@
+/** GET /api/order-statuses — Admin & Employee. */
+export interface OrderStatusOption {
+  id: number;
+  name: string;
+}
+
 /** GET/PATCH /api/account/me */
 export interface UserProfile {
   id: number;

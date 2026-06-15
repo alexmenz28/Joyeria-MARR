@@ -4,6 +4,7 @@ import RevealSection from '../components/common/RevealSection';
 import api from '../utils/api';
 import type { Order, PagedResult } from '../types';
 import TablePagination, { ADMIN_TABLE_PAGE_SIZE } from '../components/admin/TablePagination';
+import { useAuth } from '../context/AuthContext';
 
 function formatDate(iso: string) {
   try {
@@ -20,10 +21,10 @@ const UserOrders = () => {
   const [loading, setLoading] = useState(true);
   const [listLoading, setListLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const { isAuthenticated } = useAuth();
 
   const loadOrders = useCallback(async () => {
-    if (!token) return;
+    if (!isAuthenticated) return;
     try {
       setListLoading(true);
       setError(null);
@@ -41,31 +42,15 @@ const UserOrders = () => {
       setListLoading(false);
       setLoading(false);
     }
-  }, [token, page]);
+  }, [isAuthenticated, page]);
 
   useEffect(() => {
-    if (!token) {
+    if (!isAuthenticated) {
       setLoading(false);
       return;
     }
     void loadOrders();
-  }, [token, loadOrders]);
-
-  if (!token) {
-    return (
-      <div className="min-h-full font-sans">
-        <section className="max-w-5xl mx-auto py-16 px-6 md:px-8">
-          <RevealSection>
-            <h2 className="text-3xl font-bold text-marrGold mb-4">My orders</h2>
-            <p className="text-gray-700 dark:text-gray-300 mb-6">Sign in to see your order history.</p>
-            <Link to="/login" className="inline-block bg-gold-500 text-white px-6 py-3 rounded-full font-semibold hover:bg-gold-600">
-              Sign in
-            </Link>
-          </RevealSection>
-        </section>
-      </div>
-    );
-  }
+  }, [isAuthenticated, loadOrders]);
 
   return (
     <div className="min-h-full font-sans">

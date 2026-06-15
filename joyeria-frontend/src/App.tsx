@@ -6,6 +6,7 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 import BackToTop from './components/common/BackToTop';
 import Navbar from './components/layout/Navbar';
 import { CartProvider } from './context/CartContext';
+import { AuthProvider } from './context/AuthContext';
 import CartToast from './components/cart/CartToast';
 
 import Home from './pages/Home';
@@ -25,6 +26,8 @@ import SalesManagement from './pages/admin/SalesManagement';
 import UserManagement from './pages/admin/UserManagement';
 import OrderManagement from './pages/admin/OrderManagement';
 import AdminSettings from './pages/admin/AdminSettings';
+import NotFound from './pages/NotFound';
+import RoleDashboardRedirect from './components/common/RoleDashboardRedirect';
 
 /** Redirect /producto/:id → /product/:id */
 function LegacyProductRedirect() {
@@ -52,9 +55,12 @@ function AppRoutes() {
           <Route path="/cart" element={<ShoppingCart />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/profile" element={<UserProfile />} />
-          <Route path="/orders" element={<UserOrders />} />
+          <Route path="/profile" element={<ProtectedRoute requireAuth><UserProfile /></ProtectedRoute>} />
+          <Route path="/orders" element={<ProtectedRoute requireAuth><UserOrders /></ProtectedRoute>} />
           <Route path="/contact" element={<Contact />} />
+
+          <Route path="/dashboard" element={<RoleDashboardRedirect />} />
+          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
 
           <Route path="/admin/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/admin/products" element={<ProtectedRoute><ProductManagement /></ProtectedRoute>} />
@@ -86,6 +92,8 @@ function AppRoutes() {
           <Route path="/admin/usuarios" element={<Navigate to="/admin/users" replace />} />
           <Route path="/admin/ventas" element={<Navigate to="/admin/sales" replace />} />
           <Route path="/admin/configuracion" element={<Navigate to="/admin/settings" replace />} />
+
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
       <BackToTop />
@@ -102,12 +110,14 @@ function App() {
 
   return (
     <HelmetProvider>
-      <Router>
-        <CartProvider>
-          <AppRoutes />
-          <CartToast />
-        </CartProvider>
-      </Router>
+      <AuthProvider>
+        <Router>
+          <CartProvider>
+            <AppRoutes />
+            <CartToast />
+          </CartProvider>
+        </Router>
+      </AuthProvider>
     </HelmetProvider>
   );
 }

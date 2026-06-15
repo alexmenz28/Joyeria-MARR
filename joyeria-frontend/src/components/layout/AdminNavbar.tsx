@@ -2,9 +2,9 @@ import { Fragment, useEffect, useState } from 'react';
 import { Disclosure, Menu, Transition } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon, MoonIcon, SunIcon } from '@heroicons/react/24/outline';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode';
 import useDarkMode from '../../hooks/useDarkMode';
-import { getJwtRole, isAdmin } from '../../utils/jwtRole';
+import { isAdmin } from '../../utils/jwtRole';
+import { useAuth } from '../../context/AuthContext';
 
 const adminNavigationAll = [
   { name: 'Dashboard', href: '/admin/dashboard' },
@@ -22,32 +22,20 @@ function classNames(...classes: string[]) {
 export default function AdminNavbar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { isAuthenticated, role, logout } = useAuth();
   const [darkMode, setDarkMode] = useDarkMode();
   const [navItems, setNavItems] = useState<readonly { name: string; href: string }[]>(adminNavigationAll);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    setIsAuthenticated(!!token);
-    if (!token) {
-      setNavItems(adminNavigationAll);
-      return;
-    }
-    try {
-      const decoded = jwtDecode<Record<string, unknown>>(token);
-      const role = getJwtRole(decoded);
-      setNavItems(
-        isAdmin(role)
-          ? adminNavigationAll
-          : adminNavigationAll.filter((i) => i.href !== '/admin/users')
-      );
-    } catch {
-      setNavItems(adminNavigationAll);
-    }
-  }, [location]);
+    setNavItems(
+      isAdmin(role)
+        ? adminNavigationAll
+        : adminNavigationAll.filter((i) => i.href !== '/admin/users')
+    );
+  }, [role, location]);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    logout();
     navigate('/');
   };
 

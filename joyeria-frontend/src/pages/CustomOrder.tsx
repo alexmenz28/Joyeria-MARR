@@ -1,29 +1,21 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode';
 import RevealSection from '../components/common/RevealSection';
 import { Helmet } from 'react-helmet-async';
 import api from '../utils/api';
-import { getJwtRole, isCustomer } from '../utils/jwtRole';
+import { useAuth } from '../context/AuthContext';
+import { isCustomer } from '../utils/jwtRole';
+import { getApiErrorMessage } from '../utils/apiErrors';
 
 const CustomOrder = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, role } = useAuth();
   const [description, setDescription] = useState('');
   const [metal, setMetal] = useState('');
   const [budget, setBudget] = useState('');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  const role = useMemo(() => {
-    if (!token) return undefined;
-    try {
-      return getJwtRole(jwtDecode<Record<string, unknown>>(token));
-    } catch {
-      return undefined;
-    }
-  }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +26,7 @@ const CustomOrder = () => {
       return;
     }
 
-    if (!token) {
+    if (!isAuthenticated) {
       navigate('/login?from=/custom-order');
       return;
     }
@@ -62,11 +54,7 @@ const CustomOrder = () => {
       });
       navigate('/orders');
     } catch (err: unknown) {
-      const msg =
-        err && typeof err === 'object' && 'response' in err
-          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-          : undefined;
-      setError(typeof msg === 'string' ? msg : 'Could not submit your request. Try again later.');
+      setError(getApiErrorMessage(err, 'Could not submit your request. Try again later.'));
     } finally {
       setSubmitting(false);
     }
@@ -87,7 +75,7 @@ const CustomOrder = () => {
         </RevealSection>
 
         <div className="rounded-2xl border border-gold-200/60 dark:border-gold-500/20 bg-white dark:bg-night-800 p-6 md:p-8 shadow-lg">
-          {!token && (
+          {!isAuthenticated && (
             <p className="mb-6 rounded-lg bg-gold-50 dark:bg-gold-900/20 px-4 py-3 text-sm text-gray-800 dark:text-gray-200">
               <Link to="/login?from=/custom-order" className="font-semibold text-gold-600 dark:text-gold-400">
                 Sign in

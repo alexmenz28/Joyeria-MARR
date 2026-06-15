@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import api from '../utils/api';
+import { getApiErrorMessage } from '../utils/apiErrors';
 
 const Register = () => {
   const [name, setName] = useState('');
@@ -35,11 +36,7 @@ const Register = () => {
         navigate(q ? `/login${q}` : '/login');
       }, 2000);
     } catch (err: unknown) {
-      const message =
-        err && typeof err === 'object' && 'response' in err && err.response && typeof (err.response as { data?: { message?: string } }).data?.message === 'string'
-          ? (err.response as { data: { message: string } }).data.message
-          : 'Could not complete registration.';
-      setError(message);
+      setError(getApiErrorMessage(err, 'Could not complete registration.'));
     }
   };
 

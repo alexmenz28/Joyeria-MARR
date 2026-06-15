@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { ShoppingCart, Users, DollarSign, ArrowRight, Settings, Box, TrendingUp } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Link } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode';
 import AdminNavbar from '../../components/layout/AdminNavbar';
 import api from '../../utils/api';
-import { getJwtRole, isAdmin } from '../../utils/jwtRole';
+import { isAdmin } from '../../utils/jwtRole';
+import { useAuth } from '../../context/AuthContext';
 import type { AdminDashboardStats, SalesSummary } from '../../types';
 import { formatUsd, formatUsdAxisTick } from '../../utils/usdFormat';
 
@@ -53,21 +53,8 @@ const Dashboard = () => {
   const [salesSummary, setSalesSummary] = useState<SalesSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isAdminUser, setIsAdminUser] = useState(false);
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setIsAdminUser(false);
-      return;
-    }
-    try {
-      const decoded = jwtDecode<Record<string, unknown>>(token);
-      setIsAdminUser(isAdmin(getJwtRole(decoded)));
-    } catch {
-      setIsAdminUser(false);
-    }
-  }, []);
+  const { role } = useAuth();
+  const isAdminUser = isAdmin(role);
 
   useEffect(() => {
     let cancelled = false;
@@ -135,7 +122,7 @@ const Dashboard = () => {
             title="Revenue (orders)"
             value={loading ? '…' : formatUsd(stats?.ordersRevenueTotal ?? 0)}
             icon={DollarSign}
-            subtitle="Sum of order totals"
+            subtitle="Completed orders only"
           />
         </div>
 

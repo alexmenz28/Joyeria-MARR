@@ -2,10 +2,10 @@ import { Fragment, useEffect, useState } from 'react';
 import { Disclosure, Menu, Transition } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon, ShoppingCartIcon, MoonIcon, SunIcon } from '@heroicons/react/24/outline';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode';
 import useDarkMode from '../../hooks/useDarkMode';
-import { getJwtRole, isAdmin, isAdminOrEmployee } from '../../utils/jwtRole';
+import { isAdmin, isAdminOrEmployee } from '../../utils/jwtRole';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 
 const userNavigation = [
   { name: 'Home', href: '/' },
@@ -30,42 +30,23 @@ export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { itemCount, cartToast } = useCart();
+  const { isAuthenticated, role: userRole, logout } = useAuth();
   const [cartBadgePulse, setCartBadgePulse] = useState(0);
 
   useEffect(() => {
     if (cartToast?.kind === 'added') setCartBadgePulse((k) => k + 1);
   }, [cartToast]);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
   const [darkMode, setDarkMode] = useDarkMode();
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      setIsAuthenticated(true);
-      try {
-        const decoded = jwtDecode<Record<string, unknown>>(token);
-        setUserRole(getJwtRole(decoded) ?? null);
-      } catch {
-        setUserRole(null);
-      }
-    } else {
-      setIsAuthenticated(false);
-      setUserRole(null);
-    }
-  }, [location]);
-
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    setIsAuthenticated(false);
-    setUserRole(null);
+    logout();
     navigate('/');
   };
 
-  const adminNavForUser = isAdmin(userRole ?? undefined)
+  const adminNavForUser = isAdmin(userRole)
     ? adminNavigation
     : adminNavigation.filter((item) => item.href !== '/admin/users');
-  const navigation = isAdminOrEmployee(userRole ?? undefined) ? adminNavForUser : userNavigation;
+  const navigation = isAdminOrEmployee(userRole) ? adminNavForUser : userNavigation;
 
   return (
     <Disclosure
@@ -104,7 +85,7 @@ export default function Navbar() {
                 </div>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:items-center gap-4">
-                {!isAdminOrEmployee(userRole ?? undefined) && (
+                {!isAdminOrEmployee(userRole) && (
                   <Link
                     to="/cart"
                     className="relative rounded-full bg-transparent p-1 text-marrGold hover:text-marrGold focus:outline-none focus:ring-2 focus:ring-marrGold focus:ring-offset-2 transition-colors"
@@ -142,14 +123,14 @@ export default function Navbar() {
                     Log in
                   </button>
                 ) : (
-                  <Menu as="div" className="relative ml-3">
+                  <Menu as="div" className="relative ml-3 shrink-0">
                     <div>
-                      <Menu.Button className="flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
+                      <Menu.Button className="flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-gold-500 focus:ring-offset-2 dark:focus:ring-offset-night-900">
                         <span className="sr-only">Open user menu</span>
                         <img
-                          className="h-8 w-8 rounded-full"
+                          className="h-8 w-8 rounded-full object-cover"
                           src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                          alt=""
+                          alt="Account menu"
                         />
                       </Menu.Button>
                     </div>
@@ -162,8 +143,11 @@ export default function Navbar() {
                       leaveFrom="transform opacity-100 scale-100"
                       leaveTo="transform opacity-0 scale-95"
                     >
-                      <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-gray-800 dark:text-white">
-                        {isAdminOrEmployee(userRole ?? undefined) ? (
+                      <Menu.Items
+                        anchor="bottom end"
+                        className="z-[100] mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none dark:bg-night-800 dark:ring-white/10"
+                      >
+                        {isAdminOrEmployee(userRole) ? (
                           <Menu.Item>
                             {({ active }) => (
                               <Link to="/admin/dashboard" className={classNames(active ? 'bg-gray-100 dark:bg-gray-700' : '', 'block px-4 py-2 text-sm text-gray-700 dark:text-gray-200')}>
@@ -209,7 +193,7 @@ export default function Navbar() {
                 )}
               </div>
               <div className="flex items-center gap-1 sm:hidden">
-                {!isAdminOrEmployee(userRole ?? undefined) && (
+                {!isAdminOrEmployee(userRole) && (
                   <Link
                     to="/cart"
                     className="relative rounded-full p-2 text-marrGold/80 hover:text-marrGold hover:bg-gold-50 dark:hover:bg-night-700 transition-colors duration-200"

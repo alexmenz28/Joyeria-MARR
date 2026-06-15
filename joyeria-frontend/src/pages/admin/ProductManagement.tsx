@@ -4,16 +4,9 @@ import type { Product, PagedResult, MaterialRef } from '../../types';
 import AdminNavbar from '../../components/layout/AdminNavbar';
 import TablePagination, { ADMIN_TABLE_PAGE_SIZE } from '../../components/admin/TablePagination';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
-
-const CATEGORY_OPTIONS = [
-  'Rings',
-  'Necklaces',
-  'Bracelets',
-  'Earrings',
-  'Charms',
-  'Sets',
-  'Other',
-] as const;
+import { useAuth } from '../../context/AuthContext';
+import { isAdmin } from '../../utils/jwtRole';
+import { getApiErrorMessage } from '../../utils/apiErrors';
 
 const emptyProduct: Partial<Product> = {
   name: '',
@@ -28,6 +21,9 @@ const emptyProduct: Partial<Product> = {
 };
 
 const ProductManagement = () => {
+  const { role } = useAuth();
+  const canDelete = isAdmin(role);
+  const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -54,6 +50,10 @@ const ProductManagement = () => {
       .get<MaterialRef[]>('/api/materials')
       .then((r) => setMaterialOptions(r.data))
       .catch(() => setMaterialOptions([]));
+    void api
+      .get<string[]>('/api/categories')
+      .then((r) => setCategoryOptions(r.data))
+      .catch(() => setCategoryOptions([]));
   }, []);
 
   const loadProducts = useCallback(async () => {
@@ -68,8 +68,8 @@ const ProductManagement = () => {
       setProducts(data.items);
       setTotalCount(data.totalCount);
       if (data.page !== tablePage) setTablePage(data.page);
-    } catch {
-      setError('Could not load products.');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Could not load products.'));
     } finally {
       setListLoading(false);
       setBootstrapping(false);
@@ -118,8 +118,8 @@ const ProductManagement = () => {
       await api.delete(`/api/products/${productToDelete.id}`);
       await loadProducts();
       setProductToDelete(null);
-    } catch {
-      setError('Could not delete product (admins only).');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Could not delete product (admins only).'));
     } finally {
       setIsDeleting(false);
     }
@@ -312,13 +312,15 @@ const ProductManagement = () => {
                               >
                                 Edit
                               </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteClick(product)}
-                                className="bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-red-700 transition-colors"
-                              >
-                                Delete
-                              </button>
+                              {canDelete && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteClick(product)}
+                                  className="bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-red-700 transition-colors"
+                                >
+                                  Delete
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -344,7 +346,9 @@ const ProductManagement = () => {
               <h2 id="delete-modal-title" className="text-xl font-bold text-marrGold mb-2">Delete product?</h2>
               <p className="text-gray-700 dark:text-gray-300 mb-1">This will permanently remove:</p>
               <p className="font-semibold text-gray-900 dark:text-gray-100 mb-6">{productToDelete.name}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">This action cannot be undone. The product will be removed from the database.</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                Products with order history are hidden from the catalog (soft-delete). Others are removed permanently.
+              </p>
               <div className="flex gap-3 justify-end">
                 <button
                   type="button"
@@ -435,7 +439,7 @@ const ProductManagement = () => {
                       required
                     >
                       <option value="">Select…</option>
-                      {CATEGORY_OPTIONS.map((c) => (
+                      {categoryOptions.map((c) => (
                         <option key={c} value={c}>
                           {c}
                         </option>

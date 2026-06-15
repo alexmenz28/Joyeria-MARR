@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import RevealSection from '../components/common/RevealSection';
 import { Helmet } from 'react-helmet-async';
 import api from '../utils/api';
 import type { UserProfile as UserProfileData } from '../types';
+import { getApiErrorMessage } from '../utils/apiErrors';
+import { useAuth } from '../context/AuthContext';
 
 const UserProfile = () => {
   const [profile, setProfile] = useState<UserProfileData | null>(null);
@@ -21,10 +22,10 @@ const UserProfile = () => {
   const [pwMessage, setPwMessage] = useState<string | null>(null);
   const [pwError, setPwError] = useState<string | null>(null);
 
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
-    if (!token) {
+    if (!isAuthenticated) {
       setLoading(false);
       return;
     }
@@ -47,7 +48,7 @@ const UserProfile = () => {
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, [isAuthenticated]);
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,31 +89,11 @@ const UserProfile = () => {
       setConfirmPassword('');
       setPwMessage('Password changed.');
     } catch (err: unknown) {
-      const msg =
-        err && typeof err === 'object' && 'response' in err
-          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-          : undefined;
-      setPwError(typeof msg === 'string' ? msg : 'Could not change password.');
+      setPwError(getApiErrorMessage(err, 'Could not change password.'));
     } finally {
       setPwSaving(false);
     }
   };
-
-  if (!token) {
-    return (
-      <div className="min-h-full font-sans">
-        <section className="max-w-5xl mx-auto py-16 px-6 md:px-8">
-          <RevealSection>
-            <h2 className="text-3xl font-bold text-marrGold mb-4">Your profile</h2>
-            <p className="text-gray-700 dark:text-gray-300 mb-6">Sign in to manage your account.</p>
-            <Link to="/login?from=/profile" className="inline-block rounded-lg bg-gold-500 px-6 py-3 font-semibold text-white hover:bg-gold-600">
-              Sign in
-            </Link>
-          </RevealSection>
-        </section>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-full font-sans">

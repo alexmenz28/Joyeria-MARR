@@ -4,6 +4,7 @@ import AdminNavbar from '../../components/layout/AdminNavbar';
 import api from '../../utils/api';
 import type { SalesSummary } from '../../types';
 import { formatUsd, formatUsdAxisTick } from '../../utils/usdFormat';
+import { getApiErrorMessage } from '../../utils/apiErrors';
 
 const MONTH_OPTIONS = [6, 12, 18, 24, 36];
 
@@ -21,9 +22,9 @@ const SalesManagement = () => {
       try {
         const { data } = await api.get<SalesSummary>('/api/admin/sales/summary', { params: { months } });
         if (!cancelled) setSummary(data);
-      } catch {
+      } catch (err: unknown) {
         if (!cancelled) {
-          setError('Could not load the report. Check permissions (Admin or Employee) and the API.');
+          setError(getApiErrorMessage(err, 'Could not load the report. Check permissions (Admin or Employee) and the API.'));
           setSummary(null);
         }
       } finally {

@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import RevealSection from '../components/common/RevealSection';
 import { Helmet } from 'react-helmet-async';
 import api from '../utils/api';
 import type { Product } from '../types';
 import { useCart } from '../context/CartContext';
+import { usePageVisibility } from '../hooks/usePageVisibility';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -14,33 +15,32 @@ const ProductDetail = () => {
   const [qty, setQty] = useState(1);
   const { addItem } = useCart();
 
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      if (!id || Number.isNaN(Number(id))) {
-        setError('Invalid product.');
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      setError(null);
-      try {
-        const { data } = await api.get<Product>(`/api/products/${id}`);
-        if (!cancelled) {
-          setProduct(data);
-          setQty(1);
-        }
-      } catch {
-        if (!cancelled) setError('Product not found or could not be loaded.');
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-    load();
-    return () => {
-      cancelled = true;
-    };
+  const loadProduct = useCallback(async () => {
+    if (!id || Number.isNaN(Number(id))) {
+      setError('Invalid product.');
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const { data } = await api.get<Product>(`/api/products/${id}`);
+      setProduct(data);
+      setQty(1);
+    } catch {
+      setError('Product not found or could not be loaded.');
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => {
+    void loadProduct();
+  }, [loadProduct]);
+
+  usePageVisibility(() => {
+    if (id && !loading) void loadProduct();
+  });
 
   const canAdd = product && product.isAvailable && product.stock > 0;
   const maxQty = product?.stock ?? 0;

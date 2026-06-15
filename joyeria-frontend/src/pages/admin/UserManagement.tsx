@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import AdminNavbar from '../../components/layout/AdminNavbar';
 import api from '../../utils/api';
 import type { PagedResult, RoleOption, UserListItem } from '../../types';
+import { getApiErrorMessage } from '../../utils/apiErrors';
 
 const PAGE_SIZE = 10;
 
@@ -11,12 +12,6 @@ function formatDate(iso: string) {
   } catch {
     return iso;
   }
-}
-
-function getErrorMessage(err: unknown): string {
-  const ax = err as { response?: { data?: { message?: string; title?: string } } };
-  const m = ax.response?.data?.message ?? ax.response?.data?.title;
-  return typeof m === 'string' ? m : 'No se pudo completar la operación.';
 }
 
 const UserManagement = () => {
@@ -101,7 +96,7 @@ const UserManagement = () => {
       await api.patch(`/api/admin/users/${u.id}`, body);
       await loadUsers();
     } catch (e: unknown) {
-      setError(getErrorMessage(e));
+      setError(getApiErrorMessage(e, 'Could not save changes.'));
     } finally {
       setSavingId(null);
     }

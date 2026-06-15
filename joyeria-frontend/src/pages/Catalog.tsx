@@ -6,6 +6,8 @@ import RevealSection from '../components/common/RevealSection';
 import { Helmet } from 'react-helmet-async';
 import type { Product, PagedResult } from '../types';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
+import { usePageVisibility } from '../hooks/usePageVisibility';
+import { getApiErrorMessage } from '../utils/apiErrors';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -155,11 +157,7 @@ const Catalog = () => {
       setTotalPages(Math.max(1, data.totalPages));
       if (data.page !== currentPage) setCurrentPage(data.page);
     } catch (err: unknown) {
-      const msg =
-        err && typeof err === 'object' && 'response' in err
-          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-          : undefined;
-      setError(msg || 'Could not load products.');
+      setError(getApiErrorMessage(err, 'Could not load products.'));
     } finally {
       setGridLoading(false);
       setLoading(false);
@@ -192,6 +190,10 @@ const Catalog = () => {
     }
     void loadCatalog();
   }, [loadCatalog]);
+
+  usePageVisibility(() => {
+    if (!loading) void loadCatalog();
+  });
 
   if (loading && products.length === 0 && !error) {
     return (

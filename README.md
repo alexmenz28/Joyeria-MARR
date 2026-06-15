@@ -67,7 +67,7 @@ npm start
 ## Características
 
 - **Backend:** API REST con **DTOs** de entrada/salida, autenticación JWT (rate limit en `/api/auth/*`), Entity Framework Core con SQL Server, **transacciones y concurrencia de stock**, soft-delete de productos, Swagger con JWT, Cloudinary (validación de imágenes), **health check**, roles (**Admin**, **Employee**, **Customer**), catálogo con categorías y materiales normalizados.
-- **Frontend:** React, React Router (navegación SPA), Tailwind CSS, modo claro/oscuro (por defecto claro), **carrito** (localStorage) y **checkout** para clientes, **pedido personalizado**, **perfil y cambio de contraseña**, catálogo con **paginación en servidor**, “mis pedidos”, panel admin en **inglés** con layout unificado (hero + contenedor ancho fijo), dashboard con KPIs y **gráfico de ventas mensuales** (API real, USD/`en-US`), **gestión de usuarios** (solo Admin), **informe de ventas** (Admin y Employee).
+- **Frontend:** React, React Router (navegación SPA), Tailwind CSS, modo claro/oscuro (por defecto claro), **AuthContext** y rutas protegidas, **carrito** (localStorage) con **sincronización de stock** al checkout y al volver a la pestaña, **checkout** para clientes, **pedido personalizado**, **perfil y cambio de contraseña**, catálogo con **paginación en servidor**, “mis pedidos”, panel admin en **inglés** con layout unificado (hero + contenedor ancho fijo), dashboard con KPIs y **gráfico de ventas mensuales** (API real, USD/`en-US`), **gestión de usuarios** (solo Admin), **informe de ventas** (Admin y Employee). URL `/dashboard` redirige según rol.
 
 ---
 
@@ -102,6 +102,11 @@ Si la base de datos está vacía, al arrancar el backend en **Development** se i
 - No subir `appsettings.json` ni `.env` al repositorio; usar `appsettings.Example.json`, User Secrets o variables de entorno.
 - Configurar `Cors:AllowedOrigins` en producción.
 - Rotar `JwtSettings:Key` y credenciales de Cloudinary si se expusieron.
+- Rutas `/admin/*` y `/dashboard` están protegidas por rol en el frontend; el API también exige JWT y roles en cada endpoint.
+
+## Concurrencia de stock
+
+Los pedidos de catálogo descuentan stock dentro de una transacción. Si dos usuarios compran el mismo artículo simultáneamente, solo uno tendrá éxito si no hay stock suficiente; el otro recibe error de stock insuficiente o de conflicto de concurrencia. El frontend actualiza cantidades del carrito antes de confirmar el pedido.
 
 ---
 

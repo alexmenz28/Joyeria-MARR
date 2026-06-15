@@ -1,54 +1,59 @@
 import React, { useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
-import api from '../utils/api';
 import { jwtDecode } from 'jwt-decode';
+import api from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 import { getJwtRole, isAdminOrEmployee } from '../utils/jwtRole';
+import { getApiErrorMessage } from '../utils/apiErrors';
+
+function isStaffOnlyPath(path: string): boolean {
+  return path === '/dashboard' || path.startsWith('/admin');
+}
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { login, role: existingRole, isAuthenticated } = useAuth();
   const returnTo = searchParams.get('from') || searchParams.get('returnUrl') || '';
+
+  React.useEffect(() => {
+    if (!isAuthenticated) return;
+    if (isAdminOrEmployee(existingRole)) {
+      navigate('/admin/dashboard', { replace: true });
+    } else if (returnTo.startsWith('/') && !returnTo.startsWith('//') && !isStaffOnlyPath(returnTo)) {
+      navigate(returnTo, { replace: true });
+    } else {
+      navigate(isAdminOrEmployee(existingRole) ? '/admin/dashboard' : '/', { replace: true });
+    }
+  }, [isAuthenticated, existingRole, navigate, returnTo]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setSuccess(null);
 
     try {
-      const response = await api.post('/api/auth/login', {
-        email,
-        password,
-      });
+      const response = await api.post('/api/auth/login', { email, password });
 
-      if (response.data.token) {
-        localStorage.setItem('token', response.data.token);
-        setSuccess('Signed in successfully. Redirecting…');
-
-        const decodedToken = jwtDecode<Record<string, unknown>>(response.data.token);
-        const userRole = getJwtRole(decodedToken);
-
-        setTimeout(() => {
-          if (isAdminOrEmployee(userRole)) {
-            navigate('/admin/dashboard');
-          } else if (returnTo.startsWith('/') && !returnTo.startsWith('//')) {
-            navigate(returnTo);
-          } else {
-            navigate('/catalog');
-          }
-        }, 1500);
-      } else {
+      if (!response.data.token) {
         setError('No authentication token was returned.');
+        return;
+      }
+
+      login(response.data.token);
+
+      const userRole = getJwtRole(jwtDecode<Record<string, unknown>>(response.data.token));
+      if (isAdminOrEmployee(userRole)) {
+        navigate('/admin/dashboard', { replace: true });
+      } else if (returnTo.startsWith('/') && !returnTo.startsWith('//') && !isStaffOnlyPath(returnTo)) {
+        navigate(returnTo, { replace: true });
+      } else {
+        navigate(isAdminOrEmployee(userRole) ? '/admin/dashboard' : '/', { replace: true });
       }
     } catch (err: unknown) {
-      const message =
-        err && typeof err === 'object' && 'response' in err && err.response && typeof (err.response as { data?: { message?: string } }).data?.message === 'string'
-          ? (err.response as { data: { message: string } }).data.message
-          : 'Sign-in failed. Please check your credentials.';
-      setError(message);
+      setError(getApiErrorMessage(err, 'Sign-in failed. Please check your credentials.'));
     }
   };
 
@@ -98,12 +103,6 @@ const Login = () => {
           {error && (
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg text-sm" role="alert">
               {error}
-            </div>
-          )}
-
-          {success && (
-            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 px-4 py-3 rounded-lg text-sm" role="alert">
-              {success}
             </div>
           )}
 

@@ -1,0 +1,48 @@
+# Full-stack compose for staging / local production-like runs.
+# Requires Docker Desktop. SQL Server password must meet complexity rules.
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "JoyeriaMarr2026!"
+    ports:
+      - "1433:1433"
+    volumes:
+      - marr_sql_data:/var/opt/mssql
+
+  api:
+    build:
+      context: .
+      dockerfile: joyeria-backend/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=db;Database=JoyeriaDB;User Id=sa;Password=JoyeriaMarr2026!;TrustServerCertificate=True;MultipleActiveResultSets=true"
+      JwtSettings__Key: "CHANGE_ME_TO_A_LONG_RANDOM_SECRET_KEY_32+"
+      JwtSettings__Issuer: JoyeriaAPI
+      JwtSettings__Audience: JoyeriaClient
+      JwtSettings__DurationInMinutes: "60"
+      CloudinarySettings__CloudName: "${CLOUDINARY_CLOUD_NAME:-demo}"
+      CloudinarySettings__ApiKey: "${CLOUDINARY_API_KEY:-123456789012345}"
+      CloudinarySettings__ApiSecret: "${CLOUDINARY_API_SECRET:-demo-secret}"
+      Cors__AllowedOrigins__0: "http://localhost"
+      Cors__AllowedOrigins__1: "http://localhost:3000"
+    ports:
+      - "5053:8080"
+    depends_on:
+      - db
+
+  web:
+    build:
+      context: .
+      dockerfile: joyeria-frontend/Dockerfile
+      args:
+        REACT_APP_API_BASE_URL: http://localhost:5053
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+
+volumes:
+  marr_sql_data:

@@ -10,11 +10,16 @@ namespace JoyeriaBackend.Services;
 public class OrderService : IOrderService
 {
     private readonly ApplicationDbContext _context;
+    private readonly ICheckoutPricingService _checkoutPricing;
     private readonly ILogger<OrderService> _logger;
 
-    public OrderService(ApplicationDbContext context, ILogger<OrderService> logger)
+    public OrderService(
+        ApplicationDbContext context,
+        ICheckoutPricingService checkoutPricing,
+        ILogger<OrderService> logger)
     {
         _context = context;
+        _checkoutPricing = checkoutPricing;
         _logger = logger;
     }
 
@@ -129,7 +134,7 @@ public class OrderService : IOrderService
 
         try
         {
-            decimal total = 0;
+            decimal subtotal = 0;
             var lines = new List<OrderLine>();
             var touchedProducts = new List<Product>();
 
@@ -156,7 +161,7 @@ public class OrderService : IOrderService
                     product.UpdatedAt = DateTime.UtcNow;
                     touchedProducts.Add(product);
 
-                    total += product.Price * item.Quantity;
+                    subtotal += product.Price * item.Quantity;
                     lines.Add(new OrderLine
                     {
                         ProductId = product.Id,
@@ -179,12 +184,31 @@ public class OrderService : IOrderService
                 }
             }
 
+            var hasCatalogLines = lines.Any(l => l.ProductId != null);
+            CheckoutQuoteDto? quote = null;
+
+            if (hasCatalogLines)
+            {
+                if (dto.Shipping == null)
+                    throw new InvalidOperationException("Shipping address is required for catalog orders.");
+
+                quote = _checkoutPricing.Quote(subtotal, dto.Shipping);
+            }
+
             var order = new Order
             {
                 UserId = userId,
                 OrderStatusId = pending.Id,
                 Notes = dto.Notes,
-                Total = total,
+                Subtotal = subtotal,
+                TaxAmount = quote?.TaxAmount ?? 0,
+                ShippingAmount = quote?.ShippingAmount ?? 0,
+                Total = quote?.Total ?? subtotal,
+                ShipStreet = dto.Shipping?.Street.Trim(),
+                ShipCity = dto.Shipping?.City.Trim(),
+                ShipState = string.IsNullOrWhiteSpace(dto.Shipping?.State) ? null : dto.Shipping!.State.Trim(),
+                ShipPostalCode = dto.Shipping?.PostalCode.Trim(),
+                ShipCountry = dto.Shipping?.Country.Trim().ToUpperInvariant(),
                 OrderedAt = DateTime.UtcNow,
                 Lines = lines,
             };

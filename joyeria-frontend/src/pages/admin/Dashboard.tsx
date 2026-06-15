@@ -90,7 +90,7 @@ const Dashboard = () => {
   return (
     <>
       <AdminNavbar />
-      <div className="pt-24 p-4 md:p-8 bg-ivory dark:bg-night-900 min-h-full transition-colors">
+      <div className="admin-page p-4 md:p-8">
         <h1 className="text-3xl font-bold text-marrGold mb-6">Admin dashboard</h1>
 
         {error && (

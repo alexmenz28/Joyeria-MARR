@@ -1,10 +1,12 @@
-import { Fragment, useEffect, useState } from 'react';
-import { Disclosure, Menu, Transition } from '@headlessui/react';
+import { useEffect, useState } from 'react';
+import { Disclosure } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon, MoonIcon, SunIcon } from '@heroicons/react/24/outline';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import useDarkMode from '../../hooks/useDarkMode';
 import { isAdmin } from '../../utils/jwtRole';
 import { useAuth } from '../../context/AuthContext';
+import UserMenu from './UserMenu';
+import UserAvatar from '../common/UserAvatar';
 
 const adminNavigationAll = [
   { name: 'Dashboard', href: '/admin/dashboard' },
@@ -12,10 +14,11 @@ const adminNavigationAll = [
   { name: 'Orders', href: '/admin/orders' },
   { name: 'Users', href: '/admin/users' },
   { name: 'Sales', href: '/admin/sales' },
+  { name: 'Settings', href: '/admin/settings' },
   { name: 'View store', href: '/' },
 ] as const;
 
-function classNames(...classes: string[]) {
+function cn(...classes: (string | false | undefined)[]) {
   return classes.filter(Boolean).join(' ');
 }
 
@@ -40,34 +43,25 @@ export default function AdminNavbar() {
   };
 
   return (
-    <Disclosure
-      as="nav"
-      className="fixed top-0 left-0 w-full z-50 bg-ivory/95 dark:bg-gradient-to-br dark:from-night-900 dark:via-night-800 dark:to-night-900 backdrop-blur border-b border-gold-500/20 shadow-sm transition-colors"
-    >
+    <Disclosure as="nav" className="navbar-shell">
       {({ open }) => (
         <>
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="flex h-16 justify-between">
               <div className="flex">
-                <div className="flex flex-shrink-0 items-center ml-4">
+                <div className="ml-4 flex flex-shrink-0 items-center">
                   <Link to="/admin/dashboard">
-                    <img
-                      className="h-12 w-auto"
-                      src="/Logo-MARR.png"
-                      alt="Joyeria MARR"
-                    />
+                    <img className="h-12 w-auto" src="/Logo-MARR.png" alt="Joyeria MARR" />
                   </Link>
                 </div>
-                <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+                <div className="hidden lg:ml-6 lg:flex lg:space-x-6">
                   {navItems.map((item) => (
                     <Link
                       key={item.name}
                       to={item.href}
-                      className={classNames(
-                        location.pathname === item.href
-                          ? 'border-b-2 border-marrGold text-marrGold'
-                          : 'border-b-2 border-transparent text-marrGold/70 hover:border-marrGold hover:text-marrGold',
-                        'inline-flex items-center px-1 pt-1 text-sm font-medium transition-colors duration-200'
+                      className={cn(
+                        'nav-link',
+                        location.pathname === item.href ? 'nav-link-active' : 'nav-link-idle'
                       )}
                     >
                       {item.name}
@@ -75,129 +69,65 @@ export default function AdminNavbar() {
                   ))}
                 </div>
               </div>
-              <div className="hidden sm:ml-6 sm:flex sm:items-center gap-4">
+              <div className="hidden sm:ml-6 sm:flex sm:items-center sm:gap-3">
                 <button
                   type="button"
                   onClick={() => setDarkMode(!darkMode)}
-                  className="rounded-full p-2 bg-porcelain dark:bg-night-800 text-gray-700 dark:text-marrGold hover:bg-gold-50 dark:hover:bg-night-700 transition-colors"
+                  className="icon-btn bg-porcelain dark:bg-night-800"
                   title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
                 >
-                  {darkMode ? (
-                    <SunIcon className="h-6 w-6" />
-                  ) : (
-                    <MoonIcon className="h-6 w-6" />
-                  )}
+                  {darkMode ? <SunIcon className="h-6 w-6" /> : <MoonIcon className="h-6 w-6" />}
                 </button>
-                {isAuthenticated && (
-                  <Menu as="div" className="relative ml-3">
-                    <div>
-                      <Menu.Button className="flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
-                        <span className="sr-only">Open user menu</span>
-                        <img
-                          className="h-8 w-8 rounded-full"
-                          src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                          alt=""
-                        />
-                      </Menu.Button>
-                    </div>
-                    <Transition
-                      as={Fragment}
-                      enter="transition ease-out duration-200"
-                      enterFrom="transform opacity-0 scale-95"
-                      enterTo="transform opacity-100 scale-100"
-                      leave="transition ease-in duration-75"
-                      leaveFrom="transform opacity-100 scale-100"
-                      leaveTo="transform opacity-0 scale-95"
-                    >
-                      <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
-                              type="button"
-                              onClick={handleLogout}
-                              className={classNames(
-                                active ? 'bg-gray-100' : '',
-                                'block w-full px-4 py-2 text-left text-sm text-gray-700'
-                              )}
-                            >
-                              Log out
-                            </button>
-                          )}
-                        </Menu.Item>
-                      </Menu.Items>
-                    </Transition>
-                  </Menu>
-                )}
+                {isAuthenticated && <UserMenu role={role} onLogout={handleLogout} />}
               </div>
               <div className="flex items-center gap-1 sm:hidden">
-                <button
-                  type="button"
-                  onClick={() => setDarkMode(!darkMode)}
-                  className="rounded-full p-2 text-marrGold/80 hover:text-marrGold hover:bg-gold-50 dark:hover:bg-night-700 transition-colors duration-200"
-                  title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-                >
-                  {darkMode ? (
-                    <SunIcon className="h-6 w-6" aria-hidden="true" />
-                  ) : (
-                    <MoonIcon className="h-6 w-6" aria-hidden="true" />
-                  )}
+                <button type="button" onClick={() => setDarkMode(!darkMode)} className="icon-btn">
+                  {darkMode ? <SunIcon className="h-6 w-6" /> : <MoonIcon className="h-6 w-6" />}
                 </button>
-                <Disclosure.Button className="inline-flex items-center justify-center rounded-md p-2 text-marrGold/80 hover:bg-gold-50 dark:hover:bg-night-700 hover:text-marrGold focus:outline-none focus:ring-2 focus:ring-inset focus:ring-gold-500 transition-colors duration-200">
+                <Disclosure.Button className="icon-btn focus:ring-2 focus:ring-inset focus:ring-gold-500">
                   <span className="sr-only">Open main menu</span>
-                  {open ? (
-                    <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
-                  ) : (
-                    <Bars3Icon className="block h-6 w-6" aria-hidden="true" />
-                  )}
+                  {open ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
                 </Disclosure.Button>
               </div>
             </div>
           </div>
 
-          <Disclosure.Panel className="sm:hidden overflow-hidden transition-all duration-200 ease-out">
-            <div className="animate-mobile-menu-in space-y-1 pb-3 pt-2 bg-ivory/50 dark:bg-night-800/50">
+          <Disclosure.Panel className="overflow-hidden transition-all duration-200 ease-out lg:hidden">
+            <div className="animate-mobile-menu-in space-y-1 border-t border-gold-500/15 bg-ivory/80 pb-3 pt-2 dark:bg-night-800/80">
               {navItems.map((item) => (
                 <Disclosure.Button
                   key={item.name}
                   as={Link}
                   to={item.href}
-                  className={classNames(
+                  className={cn(
+                    'block py-2 pl-3 pr-4 text-base font-medium transition-colors duration-200',
                     location.pathname === item.href
-                      ? 'bg-marrGold/20 border-l-4 border-marrGold text-marrGold'
-                      : 'border-transparent text-marrGold/70 hover:text-marrGold',
-                    'block py-2 pl-3 pr-4 text-base font-medium transition-colors duration-200'
+                      ? 'border-l-4 border-marrGold bg-marrGold/15 text-marrGold'
+                      : 'border-l-4 border-transparent text-marrGold/70 hover:text-marrGold'
                   )}
                 >
                   {item.name}
                 </Disclosure.Button>
               ))}
             </div>
-            <div className="border-t border-gray-200 pb-3 pt-4">
-              {isAuthenticated && (
-                <>
-                  <div className="flex items-center px-4">
-                    <img
-                      className="h-10 w-10 rounded-full"
-                      src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                      alt=""
-                    />
-                    <div className="ml-3">
-                      <div className="text-base font-medium text-marrGold">Administrator</div>
-                    </div>
-                  </div>
-                  <div className="mt-3 space-y-1">
-                    <Disclosure.Button
-                      as="button"
-                      type="button"
-                      onClick={handleLogout}
-                      className="block w-full px-4 py-2 text-left text-base font-medium text-marrGold hover:bg-marrGold/10 hover:text-marrGold"
-                    >
-                      Log out
-                    </Disclosure.Button>
-                  </div>
-                </>
-              )}
-            </div>
+            {isAuthenticated && (
+              <div className="border-t border-gold-500/15 pb-3 pt-4 dark:border-gold-500/20">
+                <div className="flex items-center gap-3 px-4">
+                  <UserAvatar className="h-10 w-10" />
+                  <span className="text-base font-medium text-marrGold">Administrator</span>
+                </div>
+                <div className="mt-3">
+                  <Disclosure.Button
+                    as="button"
+                    type="button"
+                    onClick={handleLogout}
+                    className="block w-full px-4 py-2 text-left text-base font-medium text-marrGold hover:bg-marrGold/10"
+                  >
+                    Log out
+                  </Disclosure.Button>
+                </div>
+              </div>
+            )}
           </Disclosure.Panel>
         </>
       )}

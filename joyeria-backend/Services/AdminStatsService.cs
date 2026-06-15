@@ -112,6 +112,87 @@ public class AdminStatsService : IAdminStatsService
             TotalRevenueInRange = monthly.Sum(m => m.Revenue),
             TotalOrdersInRange = monthly.Sum(m => m.OrderCount),
             Months = months,
+            ByCategory = await GetCategoryBreakdownAsync(start, completedStatus?.Id, cancellationToken),
+            ByMaterial = await GetMaterialBreakdownAsync(start, completedStatus?.Id, cancellationToken),
+            TopProducts = await GetTopProductsAsync(start, completedStatus?.Id, cancellationToken),
         };
+    }
+
+    private async Task<List<SalesBreakdownDto>> GetCategoryBreakdownAsync(
+        DateTime start,
+        int? completedStatusId,
+        CancellationToken cancellationToken)
+    {
+        if (completedStatusId == null)
+            return new List<SalesBreakdownDto>();
+
+        var rows = await _db.OrderLines.AsNoTracking()
+            .Where(l => l.ProductId != null
+                        && l.Order.OrderedAt >= start
+                        && l.Order.OrderStatusId == completedStatusId)
+            .GroupBy(l => l.Product!.Category.Name)
+            .Select(g => new SalesBreakdownDto
+            {
+                Name = g.Key,
+                Revenue = g.Sum(l => l.UnitPrice * l.Quantity),
+                UnitsSold = g.Sum(l => l.Quantity),
+            })
+            .OrderByDescending(x => x.Revenue)
+            .Take(12)
+            .ToListAsync(cancellationToken);
+
+        return rows;
+    }
+
+    private async Task<List<SalesBreakdownDto>> GetMaterialBreakdownAsync(
+        DateTime start,
+        int? completedStatusId,
+        CancellationToken cancellationToken)
+    {
+        if (completedStatusId == null)
+            return new List<SalesBreakdownDto>();
+
+        var rows = await _db.OrderLines.AsNoTracking()
+            .Where(l => l.ProductId != null
+                        && l.Product!.MaterialEntity != null
+                        && l.Order.OrderedAt >= start
+                        && l.Order.OrderStatusId == completedStatusId)
+            .GroupBy(l => l.Product!.MaterialEntity!.Name)
+            .Select(g => new SalesBreakdownDto
+            {
+                Name = g.Key,
+                Revenue = g.Sum(l => l.UnitPrice * l.Quantity),
+                UnitsSold = g.Sum(l => l.Quantity),
+            })
+            .OrderByDescending(x => x.Revenue)
+            .Take(12)
+            .ToListAsync(cancellationToken);
+
+        return rows;
+    }
+
+    private async Task<List<TopProductDto>> GetTopProductsAsync(
+        DateTime start,
+        int? completedStatusId,
+        CancellationToken cancellationToken)
+    {
+        if (completedStatusId == null)
+            return new List<TopProductDto>();
+
+        return await _db.OrderLines.AsNoTracking()
+            .Where(l => l.ProductId != null
+                        && l.Order.OrderedAt >= start
+                        && l.Order.OrderStatusId == completedStatusId)
+            .GroupBy(l => new { l.ProductId, l.Product!.Name })
+            .Select(g => new TopProductDto
+            {
+                ProductId = g.Key.ProductId!.Value,
+                Name = g.Key.Name,
+                QuantitySold = g.Sum(l => l.Quantity),
+                Revenue = g.Sum(l => l.UnitPrice * l.Quantity),
+            })
+            .OrderByDescending(x => x.QuantitySold)
+            .Take(10)
+            .ToListAsync(cancellationToken);
     }
 }

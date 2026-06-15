@@ -54,13 +54,25 @@ El frontend (`jwtRole.ts`) lee `role`, `Role` o el URI largo de .NET para mostra
 
 ### Públicos (sin token)
 
-- `GET /api/products` — Lista paginada de productos (catálogo / admin usa la misma forma). Filtros: `category` (nombre exacto), **`material`** (nombre exacto de `Materials.Name`), `search`, `minPrice`, `maxPrice`, `inStockOnly`, `sortBy`.
+- `GET /api/products` — Lista paginada de productos (catálogo / admin usa la misma forma). Filtros: `category` (nombre exacto), **`material`** (nombre exacto de `Materials.Name`), `search`, `minPrice`, `maxPrice`, `inStockOnly`, `sortBy`. Respuesta incluye `imageUrl`, `imageUrls[]` e `images[]` (`id`, `url`, `sortOrder`).
 - `GET /api/products/{id}`
 - `GET /api/products/category/{name}`
 - `GET /api/categories` — Nombres de categoría.
 - `GET /api/materials` — Lista `{ id, name }` de materiales (referencia para filtros y formularios).
 - `GET /api/order-statuses` — Estados de pedido para el panel admin (**Admin** / **Employee**).
 - `POST /api/auth/register`, `POST /api/auth/login` — Rate limit: 10 peticiones/minuto por cliente.
+- `POST /api/contact` — Formulario público de contacto (persiste en BD). Rate limit: 5 peticiones/minuto.
+- `POST /api/checkout/quote` — Cotización de subtotal + impuestos + envío (público). Cuerpo: `{ "subtotal", "shipping": { "street", "city", "state?", "postalCode", "country" } }` — `country` ISO-2 (`MX`, `US`, `ES`, …).
+
+### Formato de errores API
+
+Las excepciones de negocio y el middleware global devuelven JSON:
+
+```json
+{ "error": "Mensaje legible", "code": "BUSINESS_ERROR" }
+```
+
+Códigos habituales: `BUSINESS_ERROR` (400), `NOT_FOUND` (404), `CONFLICT` (409), `INTERNAL_ERROR` (500). El frontend usa `getApiErrorMessage()` leyendo `error` o `message` legacy.
 
 ### Autenticado (cualquier rol)
 
@@ -73,21 +85,23 @@ El frontend (`jwtRole.ts`) lee `role`, `Role` o el URI largo de .NET para mostra
 ### Solo **Customer**
 
 - `POST /api/orders` — Crear pedido:
-  - **Catálogo:** cada línea con `productId` y `quantity` (sin `customDescription`).
-  - **Personalizado / presupuesto:** línea sin `productId` (o `null`) con `customDescription` y `quantity`; el precio unitario queda en **0** hasta que el taller cotice.
+  - **Catálogo:** cada línea con `productId` y `quantity` (sin `customDescription`). **Obligatorio** incluir `shipping` (dirección). El total guardado incluye `subtotal`, `taxAmount`, `shippingAmount` y `total`.
+  - **Personalizado / presupuesto:** línea sin `productId` (o `null`) con `customDescription` y `quantity`; el precio unitario queda en **0** hasta que el taller cotice. `shipping` opcional.
   - Se pueden combinar líneas de catálogo y personalizadas en el mismo pedido.
 
 ### **Admin** y **Employee**
 
 - `GET /api/admin/stats` — Resumen del panel: conteos (productos, pedidos, clientes, usuarios), **ingresos solo de pedidos Completed**, últimos 5 pedidos.
-- `GET /api/admin/sales/summary?months=12` — Informe de ventas: **ingresos mensuales solo de pedidos Completed**; conteo de pedidos incluye todos los estados.
+- `GET /api/admin/sales/summary?months=12` — Informe de ventas: **ingresos mensuales solo de pedidos Completed**; conteo de pedidos incluye todos los estados. Incluye además `byCategory`, `byMaterial` y `topProducts` (mismo rango temporal).
+- `GET /api/admin/contact-messages` — Mensajes del formulario de contacto (paginado).
+- `PATCH /api/admin/contact-messages/{id}/read` — Marcar mensaje como leído.
 - `GET /api/orders` — Todos los pedidos (paginado).
 - `PATCH /api/orders/{id}/status` — Al pasar a **Cancelled** se restaura el stock de líneas de catálogo.
-- `POST` / `PUT /api/products` — Crear / actualizar productos (multipart: categoría por nombre, imagen en creación; campo opcional **`materialId`** numérico o vacío para quitar material).
+- `POST` / `PUT /api/products` — Crear / actualizar productos (multipart: categoría por nombre, **`imagen`** obligatoria en creación; **`imagenes`** opcional para galería adicional; **`removeImageIds`** coma-separados en update; campo opcional **`materialId`** numérico o vacío para quitar material).
 
 ### Solo **Admin**
 
-- `DELETE /api/products/{id}` — Soft-delete si tiene pedidos; borrado físico si no. Elimina imagen en Cloudinary cuando aplica.
+- `DELETE /api/products/{id}` — Soft-delete si tiene pedidos; borrado físico si no. Elimina imágenes en Cloudinary cuando aplica.
 - `DELETE /api/orders/{id}` — Restaura stock si el pedido no estaba cancelado.
 - `GET /api/admin/users` — Listado paginado de usuarios (`page`, `pageSize`, `search` opcional).
 - `PATCH /api/admin/users/{id}` — Cuerpo JSON opcional: `roleId`, `isActive` (al menos uno). Reglas: no desactivar el propio usuario; no cambiar el propio rol fuera de Admin; no dejar sin administrador activo al desactivar o bajar de rol al último admin. Las cuentas inactivas no pueden iniciar sesión.
@@ -139,5 +153,6 @@ La ruta `/admin/*` solo comprueba en el cliente que el JWT diga `Admin` o `Emplo
 ## Referencias en el repo
 
 - Backend: `Controllers/*.cs`, `Program.cs` (JWT + CORS), `Services/UserService.cs` (generación del token).
-- Frontend: `utils/jwtRole.ts`, `utils/api.ts` (header `Authorization`), `components/common/ProtectedRoute.tsx`, páginas en `pages/admin/*` (UI en inglés, listados paginados alineados con `TablePagination`).
+- Frontend: `utils/jwtRole.ts`, `utils/api.ts`, `context/AuthContext.tsx`, `components/common/ProtectedRoute.tsx`, `components/common/RoleDashboardRedirect.tsx`, páginas en `pages/admin/*`.
+- Despliegue: [`docs/DESPLIEGUE.md`](DESPLIEGUE.md).
 - Pruebas HTTP: `joyeria-backend/JoyeriaBackend.http`.

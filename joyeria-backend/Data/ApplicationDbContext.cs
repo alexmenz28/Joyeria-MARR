@@ -16,8 +16,10 @@ public class ApplicationDbContext : DbContext
     public DbSet<OrderStatus> OrderStatuses => Set<OrderStatus>();
     public DbSet<User> Users => Set<User>();
     public DbSet<Product> Products => Set<Product>();
+    public DbSet<ProductImage> ProductImages => Set<ProductImage>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderLine> OrderLines => Set<OrderLine>();
+    public DbSet<ContactMessage> ContactMessages => Set<ContactMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -72,6 +74,16 @@ public class ApplicationDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(p => p.MaterialId)
                 .OnDelete(DeleteBehavior.Restrict);
+            e.HasMany(p => p.Images)
+                .WithOne(i => i.Product)
+                .HasForeignKey(i => i.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ProductImage>(e =>
+        {
+            e.ToTable("ProductImages");
+            e.HasIndex(i => new { i.ProductId, i.SortOrder });
         });
 
         modelBuilder.Entity<Order>(e =>
@@ -99,6 +111,13 @@ public class ApplicationDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(l => l.ProductId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ContactMessage>(e =>
+        {
+            e.ToTable("ContactMessages");
+            e.HasIndex(m => m.CreatedAt);
+            e.HasIndex(m => m.IsRead);
         });
     }
 }

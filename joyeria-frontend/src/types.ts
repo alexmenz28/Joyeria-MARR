@@ -63,6 +63,22 @@ export interface SalesSummary {
   totalRevenueInRange: number;
   totalOrdersInRange: number;
   months: number;
+  byCategory: SalesBreakdown[];
+  byMaterial: SalesBreakdown[];
+  topProducts: TopProduct[];
+}
+
+export interface SalesBreakdown {
+  name: string;
+  revenue: number;
+  unitsSold: number;
+}
+
+export interface TopProduct {
+  productId: number;
+  name: string;
+  quantitySold: number;
+  revenue: number;
 }
 
 /** Server-side paged list (GET /api/products, /api/orders, …). */
@@ -80,6 +96,12 @@ export interface MaterialRef {
   name: string;
 }
 
+export interface ProductImageRef {
+  id: number;
+  url: string;
+  sortOrder: number;
+}
+
 /** Mirrors API JSON (camelCase) from JoyeriaBackend */
 export interface Product {
   id: number;
@@ -89,6 +111,8 @@ export interface Product {
   /** Category display name (from API `category`) */
   category: string;
   imageUrl?: string | null;
+  imageUrls?: string[];
+  images?: ProductImageRef[];
   /** FK to Materials; optional. */
   materialId?: number | null;
   /** Display name from Materials (API `material`). */
@@ -128,7 +152,15 @@ export interface Order {
   orderedAt: string;
   status?: string | null;
   notes?: string | null;
+  subtotal?: number;
+  taxAmount?: number;
+  shippingAmount?: number;
   total: number;
+  shipStreet?: string | null;
+  shipCity?: string | null;
+  shipState?: string | null;
+  shipPostalCode?: string | null;
+  shipCountry?: string | null;
   /** Omitted or empty on lightweight list responses. */
   lines?: OrderLine[];
 }

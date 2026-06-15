@@ -42,7 +42,7 @@ export default function ProductoCard({
   return (
     <div className="group relative flex flex-col">
       <Link to={`/product/${id}`} className="block flex-1">
-        <div className="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-lg bg-white dark:bg-night-800 shadow-md dark:shadow-lg flex items-center justify-center border border-gold-100/40 dark:border-gold-500/10 transition-all duration-200 group-hover:shadow-xl group-hover:-translate-y-1 group-hover:border-gold-200 dark:group-hover:border-gold-500/30">
+        <div className="aspect-h-1 aspect-w-1 flex w-full items-center justify-center overflow-hidden rounded-lg border border-gold-100/40 bg-white shadow-md transition-all duration-200 group-hover:-translate-y-1 group-hover:border-gold-200 group-hover:shadow-xl dark:border-gold-500/10 dark:bg-night-800 dark:shadow-lg dark:group-hover:border-gold-500/30">
           <img
             src={imageUrl && imageUrl.length > 0 ? imageUrl : '/logo192.png'}
             alt={name}
@@ -53,7 +53,7 @@ export default function ProductoCard({
         <div className="mt-4 flex justify-between">
           <div>
             <h3 className="text-sm text-marrGold font-semibold">{name}</h3>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{category}</p>
+            <p className="mt-1 text-sm text-muted">{category}</p>
           </div>
           <p className="text-sm font-medium text-gray-900 dark:text-gray-100">${Number(price).toFixed(2)}</p>
         </div>
@@ -62,7 +62,7 @@ export default function ProductoCard({
         type="button"
         onClick={handleAdd}
         disabled={!canAdd}
-        className="mt-3 w-full rounded-lg bg-gold-500 py-2 text-sm font-semibold text-white shadow hover:bg-gold-600 disabled:cursor-not-allowed disabled:opacity-40 transition-colors"
+        className="btn-marr mt-3 w-full !py-2 text-sm disabled:cursor-not-allowed"
       >
         {canAdd ? 'Add to cart' : 'Unavailable'}
       </button>

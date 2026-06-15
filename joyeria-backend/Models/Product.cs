@@ -20,6 +20,8 @@ public class Product
 
     public string? ImageUrl { get; set; }
 
+    public List<ProductImage> Images { get; set; } = new();
+
     [Required]
     public int CategoryId { get; set; }
 

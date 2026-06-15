@@ -103,13 +103,13 @@ const UserProfile = () => {
       <section className="max-w-2xl mx-auto py-16 px-6 md:px-8">
         <RevealSection>
           <h2 className="text-3xl font-bold text-marrGold mb-4">Your profile</h2>
-          <p className="text-gray-700 dark:text-gray-300 mb-8">Update your name and password.</p>
+          <p className="mb-8 text-muted">Update your name and password.</p>
         </RevealSection>
 
         {loading && <p className="text-marrGold animate-pulse">Loading…</p>}
         {!loading && profile && (
           <div className="space-y-10">
-            <div className="rounded-2xl border border-gold-200/60 dark:border-gold-500/20 bg-white dark:bg-night-800 p-6 shadow-lg">
+            <div className="surface-panel p-6">
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                 Email: <span className="font-medium text-gray-800 dark:text-gray-200">{profile.email}</span>
                 <span className="ml-2 text-xs">(contact support to change)</span>
@@ -119,7 +119,7 @@ const UserProfile = () => {
               </p>
               <form onSubmit={handleSaveProfile} className="space-y-4">
                 <div>
-                  <label htmlFor="fn" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                  <label htmlFor="fn" className="label-marr">
                     First name
                   </label>
                   <input
@@ -127,11 +127,11 @@ const UserProfile = () => {
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     required
-                    className="w-full rounded-lg border border-gold-200 dark:border-gold-500/30 bg-white dark:bg-night-700 px-3 py-2 text-gray-900 dark:text-gray-100"
+                    className="input-marr"
                   />
                 </div>
                 <div>
-                  <label htmlFor="ln" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                  <label htmlFor="ln" className="label-marr">
                     Last name
                   </label>
                   <input
@@ -139,26 +139,22 @@ const UserProfile = () => {
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     required
-                    className="w-full rounded-lg border border-gold-200 dark:border-gold-500/30 bg-white dark:bg-night-700 px-3 py-2 text-gray-900 dark:text-gray-100"
+                    className="input-marr"
                   />
                 </div>
-                {message && <p className="text-sm text-green-600 dark:text-green-400">{message}</p>}
-                {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="rounded-lg bg-gold-500 px-6 py-2 font-semibold text-white hover:bg-gold-600 disabled:opacity-50"
-                >
+                {message && <p className="alert-success">{message}</p>}
+                {error && <p className="alert-error">{error}</p>}
+                <button type="submit" disabled={saving} className="btn-marr">
                   {saving ? 'Saving…' : 'Save profile'}
                 </button>
               </form>
             </div>
 
-            <div className="rounded-2xl border border-gold-200/60 dark:border-gold-500/20 bg-white dark:bg-night-800 p-6 shadow-lg">
+            <div className="surface-panel p-6">
               <h3 className="text-lg font-bold text-marrGold mb-4">Change password</h3>
               <form onSubmit={handleChangePassword} className="space-y-4">
                 <div>
-                  <label htmlFor="cpw" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                  <label htmlFor="cpw" className="label-marr">
                     Current password
                   </label>
                   <input
@@ -168,11 +164,11 @@ const UserProfile = () => {
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     required
-                    className="w-full rounded-lg border border-gold-200 dark:border-gold-500/30 bg-white dark:bg-night-700 px-3 py-2 text-gray-900 dark:text-gray-100"
+                    className="input-marr"
                   />
                 </div>
                 <div>
-                  <label htmlFor="npw" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                  <label htmlFor="npw" className="label-marr">
                     New password
                   </label>
                   <input
@@ -183,11 +179,11 @@ const UserProfile = () => {
                     onChange={(e) => setNewPassword(e.target.value)}
                     required
                     minLength={6}
-                    className="w-full rounded-lg border border-gold-200 dark:border-gold-500/30 bg-white dark:bg-night-700 px-3 py-2 text-gray-900 dark:text-gray-100"
+                    className="input-marr"
                   />
                 </div>
                 <div>
-                  <label htmlFor="npw2" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                  <label htmlFor="npw2" className="label-marr">
                     Confirm new password
                   </label>
                   <input
@@ -197,16 +193,12 @@ const UserProfile = () => {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
-                    className="w-full rounded-lg border border-gold-200 dark:border-gold-500/30 bg-white dark:bg-night-700 px-3 py-2 text-gray-900 dark:text-gray-100"
+                    className="input-marr"
                   />
                 </div>
-                {pwMessage && <p className="text-sm text-green-600 dark:text-green-400">{pwMessage}</p>}
-                {pwError && <p className="text-sm text-red-600 dark:text-red-400">{pwError}</p>}
-                <button
-                  type="submit"
-                  disabled={pwSaving}
-                  className="rounded-lg bg-gold-500 px-6 py-2 font-semibold text-white hover:bg-gold-600 disabled:opacity-50"
-                >
+                {pwMessage && <p className="alert-success">{pwMessage}</p>}
+                {pwError && <p className="alert-error">{pwError}</p>}
+                <button type="submit" disabled={pwSaving} className="btn-marr">
                   {pwSaving ? 'Updating…' : 'Update password'}
                 </button>
               </form>

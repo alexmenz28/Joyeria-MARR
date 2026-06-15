@@ -1,10 +1,45 @@
-import React from 'react';
+import React, { useState } from 'react';
 import RevealSection from '../components/common/RevealSection';
+import { Helmet } from 'react-helmet-async';
+import api from '../utils/api';
+import { getApiErrorMessage } from '../utils/apiErrors';
 
 const Contact = () => {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+    setSubmitting(true);
+    try {
+      const { data } = await api.post<{ message: string }>('/api/contact', {
+        name: name.trim(),
+        email: email.trim(),
+        message: message.trim(),
+      });
+      setSuccess(data.message || 'Message sent. Thank you!');
+      setName('');
+      setEmail('');
+      setMessage('');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Could not send your message. Try again later.'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-full font-sans">
-      <section className="relative h-64 md:h-80 flex items-center justify-center bg-gradient-to-br from-ivory via-white to-gold-50 dark:from-night-900 dark:via-night-800 dark:to-night-900 overflow-hidden px-6">
+      <Helmet>
+        <title>Contact — Joyeria MARR</title>
+      </Helmet>
+      <section className="page-hero h-64 md:h-80">
         <img src="/Logo-MARR.png" alt="Contact Joyeria MARR" className="absolute inset-0 w-full h-full object-cover opacity-10" />
         <RevealSection className="relative z-10 text-center">
           <h2 className="text-4xl md:text-5xl font-extrabold text-marrGold drop-shadow mb-2 tracking-wide">Contact</h2>
@@ -14,31 +49,54 @@ const Contact = () => {
 
       <section className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-14 px-6 md:px-8 py-16">
         <RevealSection>
-          <form className="bg-white dark:bg-night-800 rounded-2xl shadow-lg p-8 border border-gold-200/60 dark:border-gold-500/20 flex flex-col gap-5">
+          <form
+            onSubmit={handleSubmit}
+            className="surface-panel flex flex-col gap-5 p-8"
+          >
             <h3 className="text-2xl font-bold text-marrGold">Send us a message</h3>
             <input
               type="text"
               placeholder="Full name"
-              className="rounded-lg border border-gold-200 dark:border-gold-500/30 bg-white dark:bg-night-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 focus:ring-2 focus:ring-gold-500 focus:border-gold-500 p-3 transition-colors duration-200"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="input-marr"
               required
+              maxLength={120}
             />
             <input
               type="email"
               placeholder="Email address"
-              className="rounded-lg border border-gold-200 dark:border-gold-500/30 bg-white dark:bg-night-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 focus:ring-2 focus:ring-gold-500 focus:border-gold-500 p-3 transition-colors duration-200"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="input-marr"
               required
+              maxLength={256}
             />
             <textarea
               placeholder="Your message"
               rows={5}
-              className="rounded-lg border border-gold-200 dark:border-gold-500/30 bg-white dark:bg-night-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 focus:ring-2 focus:ring-gold-500 focus:border-gold-500 p-3 resize-none transition-colors duration-200"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              className="input-marr resize-none"
               required
+              maxLength={4000}
             />
+            {error && (
+              <p className="alert-error" role="alert">
+                {error}
+              </p>
+            )}
+            {success && (
+              <p className="alert-success" role="status">
+                {success}
+              </p>
+            )}
             <button
               type="submit"
-              className="bg-gold-500 text-white px-6 py-3 rounded-full font-semibold shadow-md hover:bg-gold-600 transition-all duration-200"
+              disabled={submitting}
+              className="btn-marr !rounded-full"
             >
-              Send message
+              {submitting ? 'Sending…' : 'Send message'}
             </button>
           </form>
         </RevealSection>

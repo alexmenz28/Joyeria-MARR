@@ -45,12 +45,7 @@ const CustomOrder = () => {
     try {
       await api.post('/api/orders', {
         notes: orderNotes,
-        lines: [
-          {
-            quantity: 1,
-            customDescription: description.trim(),
-          },
-        ],
+        lines: [{ quantity: 1, customDescription: description.trim() }],
       });
       navigate('/orders');
     } catch (err: unknown) {
@@ -65,18 +60,17 @@ const CustomOrder = () => {
       <Helmet>
         <title>Custom order — Joyeria MARR</title>
       </Helmet>
-      <section className="max-w-3xl mx-auto py-16 px-6 md:px-8">
-        <RevealSection>
-          <h2 className="text-3xl font-bold text-marrGold mb-4">Custom order</h2>
-          <p className="text-gray-700 dark:text-gray-300 mb-8">
-            Describe your idea. We&apos;ll review it and contact you with a quote. No payment is taken until the design is
-            agreed.
-          </p>
+      <section className="page-hero h-48 md:h-56">
+        <RevealSection className="relative z-10 text-center">
+          <h2 className="text-3xl font-bold text-marrGold md:text-4xl">Custom order</h2>
+          <p className="mt-2 text-muted">Describe your idea — we&apos;ll contact you with a quote</p>
         </RevealSection>
+      </section>
 
-        <div className="rounded-2xl border border-gold-200/60 dark:border-gold-500/20 bg-white dark:bg-night-800 p-6 md:p-8 shadow-lg">
+      <section className="mx-auto max-w-3xl px-6 py-16 md:px-8">
+        <div className="surface-panel p-6 md:p-8">
           {!isAuthenticated && (
-            <p className="mb-6 rounded-lg bg-gold-50 dark:bg-gold-900/20 px-4 py-3 text-sm text-gray-800 dark:text-gray-200">
+            <p className="alert-warning mb-6">
               <Link to="/login?from=/custom-order" className="font-semibold text-gold-600 dark:text-gold-400">
                 Sign in
               </Link>{' '}
@@ -90,76 +84,37 @@ const CustomOrder = () => {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="co-desc" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+              <label htmlFor="co-desc" className="label-marr">
                 Describe your piece <span className="text-red-500">*</span>
               </label>
-              <textarea
-                id="co-desc"
-                required
-                rows={5}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Style, stones, occasion, size, inspiration…"
-                className="w-full rounded-lg border border-gold-200 dark:border-gold-500/30 bg-white dark:bg-night-700 px-3 py-2 text-gray-900 dark:text-gray-100"
-              />
+              <textarea id="co-desc" required rows={5} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Style, stones, occasion, size, inspiration…" className="input-marr resize-none" />
             </div>
             <div>
-              <label htmlFor="co-metal" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+              <label htmlFor="co-metal" className="label-marr">
                 Preferred metal (optional)
               </label>
-              <input
-                id="co-metal"
-                type="text"
-                value={metal}
-                onChange={(e) => setMetal(e.target.value)}
-                placeholder="e.g. 18k yellow gold, sterling silver"
-                className="w-full rounded-lg border border-gold-200 dark:border-gold-500/30 bg-white dark:bg-night-700 px-3 py-2 text-gray-900 dark:text-gray-100"
-              />
+              <input id="co-metal" type="text" value={metal} onChange={(e) => setMetal(e.target.value)} placeholder="e.g. 18k yellow gold, sterling silver" className="input-marr" />
             </div>
             <div>
-              <label htmlFor="co-budget" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+              <label htmlFor="co-budget" className="label-marr">
                 Budget range (optional)
               </label>
-              <input
-                id="co-budget"
-                type="text"
-                value={budget}
-                onChange={(e) => setBudget(e.target.value)}
-                placeholder="e.g. $500 – $1,200"
-                className="w-full rounded-lg border border-gold-200 dark:border-gold-500/30 bg-white dark:bg-night-700 px-3 py-2 text-gray-900 dark:text-gray-100"
-              />
+              <input id="co-budget" type="text" value={budget} onChange={(e) => setBudget(e.target.value)} placeholder="e.g. $500 – $1,200" className="input-marr" />
             </div>
             <div>
-              <label htmlFor="co-notes" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+              <label htmlFor="co-notes" className="label-marr">
                 Additional notes (optional)
               </label>
-              <textarea
-                id="co-notes"
-                rows={3}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="w-full rounded-lg border border-gold-200 dark:border-gold-500/30 bg-white dark:bg-night-700 px-3 py-2 text-gray-900 dark:text-gray-100"
-              />
+              <textarea id="co-notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} className="input-marr resize-none" />
             </div>
 
-            {error && (
-              <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-300">
-                {error}
-              </div>
-            )}
+            {error && <div className="alert-error">{error}</div>}
 
             <div className="flex flex-wrap gap-3">
-              <button
-                type="submit"
-                disabled={submitting}
-                className="rounded-lg bg-gold-500 px-6 py-3 font-semibold text-white shadow hover:bg-gold-600 disabled:opacity-50 transition-colors"
-              >
+              <button type="submit" disabled={submitting} className="btn-marr">
                 {submitting ? 'Submitting…' : 'Submit request'}
               </button>
-              <Link
-                to="/contact"
-                className="inline-flex items-center rounded-lg border border-gold-200 dark:border-gold-500/30 px-6 py-3 text-sm font-medium text-gold-700 dark:text-gold-300 hover:bg-gold-50 dark:hover:bg-night-700"
-              >
+              <Link to="/contact" className="btn-marr-outline inline-flex items-center">
                 Contact instead
               </Link>
             </div>

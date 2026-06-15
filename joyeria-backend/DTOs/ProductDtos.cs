@@ -4,6 +4,13 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace JoyeriaBackend.DTOs;
 
+public class ProductImageDto
+{
+    public int Id { get; set; }
+    public string Url { get; set; } = "";
+    public int SortOrder { get; set; }
+}
+
 public class ProductDto
 {
     public int Id { get; set; }
@@ -11,6 +18,8 @@ public class ProductDto
     public string Description { get; set; } = "";
     public decimal Price { get; set; }
     public string? ImageUrl { get; set; }
+    public List<string> ImageUrls { get; set; } = new();
+    public List<ProductImageDto> Images { get; set; } = new();
     public string Category { get; set; } = "";
     public int? MaterialId { get; set; }
     public string? Material { get; set; }
@@ -49,6 +58,10 @@ public class CreateProductDto
     [Required]
     [FromForm(Name = "imagen")]
     public IFormFile Imagen { get; set; } = null!;
+
+    /// <summary>Additional gallery images (optional).</summary>
+    [FromForm(Name = "imagenes")]
+    public List<IFormFile>? Imagenes { get; set; }
 }
 
 public class UpdateProductDto
@@ -81,4 +94,10 @@ public class UpdateProductDto
     public IFormFile? Imagen { get; set; }
 
     public string? ImageUrl { get; set; }
+
+    [FromForm(Name = "imagenes")]
+    public List<IFormFile>? Imagenes { get; set; }
+
+    /// <summary>Comma-separated ProductImage ids to remove.</summary>
+    public string? RemoveImageIds { get; set; }
 }

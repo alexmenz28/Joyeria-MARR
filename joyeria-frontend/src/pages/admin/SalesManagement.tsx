@@ -47,20 +47,16 @@ const SalesManagement = () => {
   return (
     <>
       <AdminNavbar />
-      <div className="w-full min-h-screen bg-ivory dark:bg-night-900 transition-colors pt-24">
-        <section className="relative h-40 flex items-center justify-center bg-gradient-to-br from-ivory via-white to-gold-50 dark:from-night-900 dark:via-night-800 dark:to-night-900 overflow-hidden px-6">
+      <div className="admin-page">
+        <section className="page-hero h-40">
           <div className="relative z-10 text-center">
-            <h1 className="text-3xl md:text-4xl font-bold text-marrGold">Sales report</h1>
-            <p className="text-gray-700 dark:text-gray-300 mt-1">Revenue and orders by month</p>
+            <h1 className="text-3xl font-bold text-marrGold md:text-4xl">Sales report</h1>
+            <p className="mt-1 text-muted">Revenue and orders by month</p>
           </div>
         </section>
 
         <section className="max-w-6xl mx-auto py-10 px-6 md:px-8 space-y-8">
-          {error && (
-            <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-red-700 dark:text-red-300 text-sm">
-              {error}
-            </div>
-          )}
+          {error && <div className="alert-error">{error}</div>}
 
           <div className="flex flex-wrap items-center gap-4">
             <label className="text-sm text-gray-700 dark:text-gray-300 flex items-center gap-2">
@@ -68,7 +64,7 @@ const SalesManagement = () => {
               <select
                 value={months}
                 onChange={(e) => setMonths(Number(e.target.value))}
-                className="rounded-lg border border-gold-200/80 dark:border-gold-500/30 bg-white dark:bg-night-800 px-3 py-2 text-gray-900 dark:text-gray-100"
+                className="input-marr !py-2"
               >
                 {MONTH_OPTIONS.map((m) => (
                   <option key={m} value={m}>
@@ -85,7 +81,7 @@ const SalesManagement = () => {
             )}
           </div>
 
-          <div className="bg-white dark:bg-night-800 rounded-2xl shadow-lg border border-gold-200/60 dark:border-gold-500/20 p-6">
+          <div className="surface-panel p-6">
             <h2 className="text-xl font-bold text-marrGold mb-4">Monthly revenue</h2>
             {loading ? (
               <p className="text-marrGold animate-pulse py-24 text-center">Loading…</p>
@@ -114,7 +110,64 @@ const SalesManagement = () => {
             )}
           </div>
 
-          <div className="bg-white dark:bg-night-800 rounded-2xl shadow-lg border border-gold-200/60 dark:border-gold-500/20 p-6 overflow-x-auto">
+          {!loading && summary && (summary.byCategory?.length > 0 || summary.byMaterial?.length > 0) && (
+            <div className="grid gap-8 lg:grid-cols-2">
+              {summary.byCategory?.length > 0 && (
+                <div className="surface-panel p-6">
+                  <h2 className="mb-4 text-xl font-bold text-marrGold">Revenue by category</h2>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart data={summary.byCategory.map((r) => ({ name: r.name, revenue: Number(r.revenue) }))}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 148, 148, 0.2)" />
+                      <XAxis dataKey="name" stroke="#9ca3af" tick={{ fontSize: 10 }} />
+                      <YAxis stroke="#9ca3af" tickFormatter={(v) => formatUsdAxisTick(v)} width={72} />
+                      <Tooltip formatter={(value: number) => [formatUsd(value), 'Revenue']} />
+                      <Bar dataKey="revenue" fill="#bfa14a" name="Revenue" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+              {summary.byMaterial?.length > 0 && (
+                <div className="surface-panel p-6">
+                  <h2 className="mb-4 text-xl font-bold text-marrGold">Revenue by material</h2>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart data={summary.byMaterial.map((r) => ({ name: r.name, revenue: Number(r.revenue) }))}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 148, 148, 0.2)" />
+                      <XAxis dataKey="name" stroke="#9ca3af" tick={{ fontSize: 10 }} />
+                      <YAxis stroke="#9ca3af" tickFormatter={(v) => formatUsdAxisTick(v)} width={72} />
+                      <Tooltip formatter={(value: number) => [formatUsd(value), 'Revenue']} />
+                      <Bar dataKey="revenue" fill="#8b7355" name="Revenue" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
+          )}
+
+          {!loading && summary && summary.topProducts?.length > 0 && (
+            <div className="surface-panel overflow-x-auto p-6">
+              <h2 className="mb-4 text-xl font-bold text-marrGold">Top products</h2>
+              <table className="min-w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-gold-200/50 text-marrGold dark:border-gold-500/20">
+                    <th className="py-2 pr-4 font-semibold">Product</th>
+                    <th className="py-2 pr-4 font-semibold">Units sold</th>
+                    <th className="py-2 font-semibold">Revenue</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {summary.topProducts.map((p) => (
+                    <tr key={p.productId} className="border-b border-gray-100 text-gray-800 dark:border-gold-500/10 dark:text-gray-200">
+                      <td className="py-2 pr-4">{p.name}</td>
+                      <td className="py-2 pr-4 tabular-nums">{p.quantitySold}</td>
+                      <td className="py-2 tabular-nums">{formatUsd(Number(p.revenue))}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <div className="surface-panel overflow-x-auto p-6">
             <h2 className="text-xl font-bold text-marrGold mb-4">Monthly breakdown</h2>
             <table className="min-w-full text-sm text-left">
               <thead>

@@ -91,7 +91,22 @@ public class ProductService : IProductService
             ImageUrl = imageUrl,
             CreatedAt = now,
             UpdatedAt = now,
+            Images = new List<ProductImage>
+            {
+                new() { Url = imageUrl, SortOrder = 0 },
+            },
         };
+
+        var sortOrder = 1;
+        if (dto.Imagenes != null)
+        {
+            foreach (var extra in dto.Imagenes.Where(f => f.Length > 0))
+            {
+                _fileValidation.ValidateImage(extra);
+                var url = await UploadImageAsync(extra);
+                product.Images.Add(new ProductImage { Url = url, SortOrder = sortOrder++ });
+            }
+        }
 
         _context.Products.Add(product);
         await _context.SaveChangesAsync();
@@ -101,7 +116,9 @@ public class ProductService : IProductService
 
     public async Task<ProductDto> UpdateAsync(int id, UpdateProductDto dto)
     {
-        var existing = await _context.Products.FindAsync(id)
+        var existing = await _context.Products
+            .Include(p => p.Images)
+            .FirstOrDefaultAsync(p => p.Id == id)
             ?? throw new KeyNotFoundException($"Product with ID {id} was not found.");
 
         if (!string.IsNullOrWhiteSpace(dto.Category))
@@ -138,11 +155,53 @@ public class ProductService : IProductService
         {
             _fileValidation.ValidateImage(dto.Imagen);
             var oldUrl = existing.ImageUrl;
-            existing.ImageUrl = await UploadImageAsync(dto.Imagen);
-            await TryDeleteImageByUrlAsync(oldUrl);
+            var newUrl = await UploadImageAsync(dto.Imagen);
+            existing.ImageUrl = newUrl;
+
+            var primary = existing.Images.OrderBy(i => i.SortOrder).FirstOrDefault();
+            if (primary != null)
+            {
+                await TryDeleteImageByUrlAsync(primary.Url);
+                primary.Url = newUrl;
+            }
+            else
+            {
+                existing.Images.Add(new ProductImage { Url = newUrl, SortOrder = 0 });
+            }
+
+            if (!string.Equals(oldUrl, newUrl, StringComparison.Ordinal))
+                await TryDeleteImageByUrlAsync(oldUrl);
         }
         else if (!string.IsNullOrWhiteSpace(dto.ImageUrl))
             existing.ImageUrl = dto.ImageUrl;
+
+        if (!string.IsNullOrWhiteSpace(dto.RemoveImageIds))
+        {
+            var removeIds = dto.RemoveImageIds
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(s => int.TryParse(s, out var imageId) ? imageId : -1)
+                .Where(imageId => imageId > 0)
+                .ToHashSet();
+
+            foreach (var image in existing.Images.Where(i => removeIds.Contains(i.Id)).ToList())
+            {
+                await TryDeleteImageByUrlAsync(image.Url);
+                existing.Images.Remove(image);
+            }
+        }
+
+        if (dto.Imagenes != null)
+        {
+            var nextSort = existing.Images.Count == 0 ? 0 : existing.Images.Max(i => i.SortOrder) + 1;
+            foreach (var extra in dto.Imagenes.Where(f => f.Length > 0))
+            {
+                _fileValidation.ValidateImage(extra);
+                var url = await UploadImageAsync(extra);
+                existing.Images.Add(new ProductImage { Url = url, SortOrder = nextSort++ });
+            }
+        }
+
+        SyncPrimaryImageUrl(existing);
 
         await _context.SaveChangesAsync();
         return (await GetByIdAsync(existing.Id))!;
@@ -166,6 +225,8 @@ public class ProductService : IProductService
         }
 
         await TryDeleteImageByUrlAsync(product.ImageUrl);
+        foreach (var image in await _context.ProductImages.Where(i => i.ProductId == id).ToListAsync())
+            await TryDeleteImageByUrlAsync(image.Url);
         _context.Products.Remove(product);
         await _context.SaveChangesAsync();
         _logger.LogInformation("Hard-deleted product {ProductId}", id);
@@ -242,7 +303,14 @@ public class ProductService : IProductService
     private IQueryable<Product> QueryWithIncludes() =>
         _context.Products
             .Include(p => p.Category)
-            .Include(p => p.MaterialEntity);
+            .Include(p => p.MaterialEntity)
+            .Include(p => p.Images);
+
+    private static void SyncPrimaryImageUrl(Product product)
+    {
+        var primary = product.Images.OrderBy(i => i.SortOrder).FirstOrDefault();
+        product.ImageUrl = primary?.Url;
+    }
 
     private async Task<string> UploadImageAsync(IFormFile imagen)
     {

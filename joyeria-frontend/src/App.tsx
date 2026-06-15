@@ -46,7 +46,7 @@ function AppRoutes() {
   return (
     <>
       {!hideNavbar && <Navbar />}
-      <div className="min-h-screen w-full bg-ivory dark:bg-night-900 transition-colors overflow-x-hidden">
+      <div className="app-shell">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/catalog" element={<Catalog />} />

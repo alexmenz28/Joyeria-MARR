@@ -43,6 +43,15 @@ API en desarrollo: `http://localhost:5053` · Health check: `GET /health` · Swa
 
 **Docker (backend):** desde la raíz del repo, `docker build -f joyeria-backend/Dockerfile -t joyeria-api .`
 
+**Docker Compose (stack completo):** `docker compose up --build` — ver [`docs/DESPLIEGUE.md`](docs/DESPLIEGUE.md).
+
+Tras cambios de esquema (p. ej. `ProductImages`, campos de envío/impuestos en `Orders`):
+
+```bash
+cd joyeria-backend
+dotnet ef database update
+```
+
 ### Tests del backend
 
 ```bash
@@ -66,8 +75,8 @@ npm start
 
 ## Características
 
-- **Backend:** API REST con **DTOs** de entrada/salida, autenticación JWT (rate limit en `/api/auth/*`), Entity Framework Core con SQL Server, **transacciones y concurrencia de stock**, soft-delete de productos, Swagger con JWT, Cloudinary (validación de imágenes), **health check**, roles (**Admin**, **Employee**, **Customer**), catálogo con categorías y materiales normalizados.
-- **Frontend:** React, React Router (navegación SPA), Tailwind CSS, modo claro/oscuro (por defecto claro), **AuthContext** y rutas protegidas, **carrito** (localStorage) con **sincronización de stock** al checkout y al volver a la pestaña, **checkout** para clientes, **pedido personalizado**, **perfil y cambio de contraseña**, catálogo con **paginación en servidor**, “mis pedidos”, panel admin en **inglés** con layout unificado (hero + contenedor ancho fijo), dashboard con KPIs y **gráfico de ventas mensuales** (API real, USD/`en-US`), **gestión de usuarios** (solo Admin), **informe de ventas** (Admin y Employee). URL `/dashboard` redirige según rol.
+- **Backend:** API REST con **DTOs**, autenticación JWT (rate limit en `/api/auth/*` y `/api/contact`), EF Core + SQL Server, transacciones y concurrencia de stock, soft-delete de productos, **galería multi-imagen** (`ProductImages`), **checkout con dirección e impuestos** por país, cotización `POST /api/checkout/quote`, Swagger con JWT (Development), Cloudinary, health check `GET /health`, roles Admin/Employee/Customer, **mensajes de contacto** persistidos, **reportes** por categoría/material y top productos.
+- **Frontend:** React SPA con **sistema de diseño unificado** (modo claro/oscuro), AuthContext, rutas protegidas, carrito con sync de stock, checkout con dirección y desglose fiscal, **carrusel de imágenes** en ficha de producto, pedido personalizado, perfil, catálogo paginado, panel admin (productos con galería, pedidos, usuarios, ventas ampliadas, **contact messages** en Settings), `/dashboard` redirige por rol.
 
 ---
 
@@ -104,6 +113,12 @@ Si la base de datos está vacía, al arrancar el backend en **Development** se i
 - Rotar `JwtSettings:Key` y credenciales de Cloudinary si se expusieron.
 - Rutas `/admin/*` y `/dashboard` están protegidas por rol en el frontend; el API también exige JWT y roles en cada endpoint.
 
+## Checkout e impuestos
+
+Los pedidos de **catálogo** requieren dirección de envío (`shipping` en `POST /api/orders`). El total incluye subtotal, impuestos y envío según país (configurable en `Checkout` de `appsettings.json`). Envío gratis desde el umbral definido en `FreeShippingThreshold`. Cotización previa: `POST /api/checkout/quote`.
+
+---
+
 ## Concurrencia de stock
 
 Los pedidos de catálogo descuentan stock dentro de una transacción. Si dos usuarios compran el mismo artículo simultáneamente, solo uno tendrá éxito si no hay stock suficiente; el otro recibe error de stock insuficiente o de conflicto de concurrencia. El frontend actualiza cantidades del carrito antes de confirmar el pedido.
@@ -112,8 +127,9 @@ Los pedidos de catálogo descuentan stock dentro de una transacción. Si dos usu
 
 ## Documentación adicional
 
-- [`docs/PERMISOS-Y-API.md`](docs/PERMISOS-Y-API.md) — roles, permisos del admin, paginación y errores típicos (401/403, HTTPS).
-- [`docs/PLAN-MAESTRO-PROYECTO.md`](docs/PLAN-MAESTRO-PROYECTO.md) — planificación del proyecto.
+- [`docs/PERMISOS-Y-API.md`](docs/PERMISOS-Y-API.md) — roles, permisos, paginación y errores API.
+- [`docs/DESPLIEGUE.md`](docs/DESPLIEGUE.md) — Docker, variables de entorno y checklist producción.
+- [`docs/PLAN-MAESTRO-PROYECTO.md`](docs/PLAN-MAESTRO-PROYECTO.md) — roadmap y visión completa.
 
 ---
 

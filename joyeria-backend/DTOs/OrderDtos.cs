@@ -32,7 +32,15 @@ public class OrderSummaryDto
     public DateTime OrderedAt { get; set; }
     public string? Status { get; set; }
     public string? Notes { get; set; }
+    public decimal Subtotal { get; set; }
+    public decimal TaxAmount { get; set; }
+    public decimal ShippingAmount { get; set; }
     public decimal Total { get; set; }
+    public string? ShipStreet { get; set; }
+    public string? ShipCity { get; set; }
+    public string? ShipState { get; set; }
+    public string? ShipPostalCode { get; set; }
+    public string? ShipCountry { get; set; }
 }
 
 /// <summary>Full order with line items.</summary>

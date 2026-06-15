@@ -37,6 +37,14 @@ public class OrderStockTests : IClassFixture<JoyeriaApiFactory>
         var create = await _client.PostAsJsonAsync("/api/orders", new
         {
             notes = "test order",
+            shipping = new
+            {
+                street = "123 Test St",
+                city = "Mexico City",
+                state = "CDMX",
+                postalCode = "01000",
+                country = "MX",
+            },
             lines = new[] { new { productId, quantity = 1 } },
         });
         Assert.Equal(HttpStatusCode.Created, create.StatusCode);

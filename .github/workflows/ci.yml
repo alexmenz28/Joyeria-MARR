@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Restore
+        run: dotnet restore Joyeria-MARR.sln
+      - name: Build
+        run: dotnet build Joyeria-MARR.sln --no-restore -c Release
+      - name: Test
+        run: dotnet test JoyeriaBackend.Tests/JoyeriaBackend.Tests.csproj -c Release --no-restore
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: joyeria-frontend/package-lock.json
+      - name: Install
+        working-directory: joyeria-frontend
+        run: npm ci
+      - name: Test
+        working-directory: joyeria-frontend
+        run: npm test -- --watchAll=false --passWithNoTests
+      - name: Build
+        working-directory: joyeria-frontend
+        env:
+          REACT_APP_API_BASE_URL: http://localhost:5053
+        run: npm run build

@@ -22,8 +22,28 @@ Authorization: Bearer {{token}}
 Accept: application/json
 
 ### Sales summary by month (Admin / Employee) — query: months=1..36, default 12
+# Response also includes byCategory, byMaterial, topProducts (completed orders in range)
 GET {{JoyeriaBackend_HostAddress}}/api/admin/sales/summary?months=12
 Authorization: Bearer {{token}}
+Accept: application/json
+
+### Checkout quote (public) — subtotal + shipping address → tax, shipping, total
+POST {{JoyeriaBackend_HostAddress}}/api/checkout/quote
+Content-Type: application/json
+
+{
+  "subtotal": 800,
+  "shipping": {
+    "street": "Av. Reforma 123",
+    "city": "Mexico City",
+    "state": "CDMX",
+    "postalCode": "06600",
+    "country": "MX"
+  }
+}
+
+### Get product by id (includes imageUrls and images[])
+GET {{JoyeriaBackend_HostAddress}}/api/products/1
 Accept: application/json
 
 ### Admin users — paged (Admin only)
@@ -78,13 +98,20 @@ Authorization: Bearer {{token}}
 GET {{JoyeriaBackend_HostAddress}}/api/orders?page=1&pageSize=10&search=
 Authorization: Bearer {{token}}
 
-### Create order — Customer role only
+### Create order — Customer role only (catalog lines require shipping)
 POST {{JoyeriaBackend_HostAddress}}/api/orders
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
   "notes": "Gift wrap please",
+  "shipping": {
+    "street": "Av. Reforma 123",
+    "city": "Mexico City",
+    "state": "CDMX",
+    "postalCode": "06600",
+    "country": "MX"
+  },
   "lines": [
     { "productId": 1, "quantity": 1 }
   ]
@@ -118,5 +145,19 @@ Accept: application/json
 
 ### Health check
 GET {{JoyeriaBackend_HostAddress}}/health
+
+### Contact form (public) — rate limit 5/min
+POST {{JoyeriaBackend_HostAddress}}/api/contact
+Content-Type: application/json
+
+{
+  "name": "Jane Doe",
+  "email": "jane@example.com",
+  "message": "I would like information about custom rings."
+}
+
+### Admin contact messages (Admin / Employee)
+GET {{JoyeriaBackend_HostAddress}}/api/admin/contact-messages?page=1&pageSize=10
+Authorization: Bearer {{token}}
 
 ###

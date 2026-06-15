@@ -10,4 +10,6 @@ public class CreateOrderDto
     [Required]
     [MinLength(1, ErrorMessage = "At least one line item is required.")]
     public List<CreateOrderLineDto> Lines { get; set; } = new();
+
+    public ShippingAddressDto? Shipping { get; set; }
 }

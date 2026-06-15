@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("JoyeriaBackend.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3f4cdf92d10e5b007b7aa9c041aaba577afd1505")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fdb3566a4f7a3ea3f81c64424b85b80a51a42358")]
 [assembly: System.Reflection.AssemblyProductAttribute("JoyeriaBackend.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("JoyeriaBackend.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

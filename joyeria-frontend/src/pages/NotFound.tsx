@@ -10,13 +10,10 @@ export default function NotFound() {
       </Helmet>
       <RevealSection className="text-center max-w-md">
         <h1 className="text-4xl font-bold text-marrGold mb-3">404</h1>
-        <p className="text-gray-700 dark:text-gray-300 mb-8">
+        <p className="mb-8 text-muted">
           This page does not exist or you do not have access to it.
         </p>
-        <Link
-          to="/"
-          className="inline-block rounded-lg bg-gold-500 px-6 py-3 font-semibold text-white hover:bg-gold-600 transition-colors"
-        >
+        <Link to="/" className="btn-marr inline-block">
           Back to home
         </Link>
       </RevealSection>

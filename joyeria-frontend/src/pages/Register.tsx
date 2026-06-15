@@ -41,11 +41,11 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-ivory dark:bg-night-900 py-12 px-6 sm:px-8 transition-colors">
-      <div className="max-w-md w-full space-y-8 p-10 bg-white dark:bg-night-800 rounded-2xl shadow-xl border border-gold-200/60 dark:border-gold-500/20 transition-colors">
+    <div className="app-shell flex min-h-screen flex-col items-center justify-center py-12 px-6 sm:px-8">
+      <div className="surface-panel max-w-md w-full space-y-8 p-10">
         <div>
           <h2 className="mt-2 text-center text-3xl font-bold text-marrGold">Create your account</h2>
-          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">Sign up to browse the catalog and place orders</p>
+          <p className="mt-2 text-center text-sm text-muted">Sign up to browse the catalog and place orders</p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
@@ -59,7 +59,7 @@ const Register = () => {
                 type="text"
                 autoComplete="name"
                 required
-                className="block w-full px-4 py-3 rounded-lg border border-gold-200 dark:border-gold-500/30 bg-white dark:bg-night-700 placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-gold-500 focus:border-gold-500 transition-colors duration-200 sm:text-sm"
+                className="input-marr sm:text-sm"
                 placeholder="Full name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -75,7 +75,7 @@ const Register = () => {
                 type="email"
                 autoComplete="email"
                 required
-                className="block w-full px-4 py-3 rounded-lg border border-gold-200 dark:border-gold-500/30 bg-white dark:bg-night-700 placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-gold-500 focus:border-gold-500 transition-colors duration-200 sm:text-sm"
+                className="input-marr sm:text-sm"
                 placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -91,7 +91,7 @@ const Register = () => {
                 type="password"
                 autoComplete="new-password"
                 required
-                className="block w-full px-4 py-3 rounded-lg border border-gold-200 dark:border-gold-500/30 bg-white dark:bg-night-700 placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-gold-500 focus:border-gold-500 transition-colors duration-200 sm:text-sm"
+                className="input-marr sm:text-sm"
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -107,7 +107,7 @@ const Register = () => {
                 type="password"
                 autoComplete="new-password"
                 required
-                className="block w-full px-4 py-3 rounded-lg border border-gold-200 dark:border-gold-500/30 bg-white dark:bg-night-700 placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-gold-500 focus:border-gold-500 transition-colors duration-200 sm:text-sm"
+                className="input-marr sm:text-sm"
                 placeholder="Confirm password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
@@ -116,27 +116,24 @@ const Register = () => {
           </div>
 
           {error && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg text-sm" role="alert">
+            <div className="alert-error" role="alert">
               {error}
             </div>
           )}
 
           {success && (
-            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 px-4 py-3 rounded-lg text-sm" role="alert">
+            <div className="alert-success" role="status">
               {success}
             </div>
           )}
 
           <div>
-            <button
-              type="submit"
-              className="w-full flex justify-center py-3 px-4 rounded-lg text-white bg-gold-500 hover:bg-gold-600 focus:outline-none focus:ring-2 focus:ring-gold-500 focus:ring-offset-2 dark:focus:ring-offset-night-800 font-medium shadow-md transition-all duration-200"
-            >
+            <button type="submit" className="btn-marr w-full flex justify-center">
               Register
             </button>
           </div>
         </form>
-        <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+        <p className="text-center text-sm text-muted">
           Already have an account?{' '}
           <Link
             to={location.search ? `/login${location.search}` : '/login'}

@@ -29,7 +29,28 @@ public class Order
 
     public string? Notes { get; set; }
 
+    public decimal Subtotal { get; set; }
+
+    public decimal TaxAmount { get; set; }
+
+    public decimal ShippingAmount { get; set; }
+
     public decimal Total { get; set; }
+
+    [StringLength(200)]
+    public string? ShipStreet { get; set; }
+
+    [StringLength(100)]
+    public string? ShipCity { get; set; }
+
+    [StringLength(100)]
+    public string? ShipState { get; set; }
+
+    [StringLength(20)]
+    public string? ShipPostalCode { get; set; }
+
+    [StringLength(2)]
+    public string? ShipCountry { get; set; }
 
     public List<OrderLine> Lines { get; set; } = new();
 }

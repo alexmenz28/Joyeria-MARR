@@ -197,15 +197,15 @@ const Catalog = () => {
 
   if (loading && products.length === 0 && !error) {
     return (
-      <div className="w-full flex items-center justify-center min-h-screen bg-ivory dark:bg-night-900">
-        <span className="text-marrGold text-lg animate-pulse">Loading products…</span>
+      <div className="flex min-h-screen items-center justify-center">
+        <span className="animate-pulse text-lg text-marrGold">Loading products…</span>
       </div>
     );
   }
 
   if (error && products.length === 0) {
     return (
-      <div className="text-center text-red-500 text-lg mt-10 px-6">
+      <div className="alert-error mx-auto mt-10 max-w-lg text-center">
         Error: {error}
       </div>
     );
@@ -217,23 +217,23 @@ const Catalog = () => {
         <title>Catalog — Joyeria MARR</title>
       </Helmet>
 
-      <section className="relative h-64 md:h-80 flex items-center justify-center bg-gradient-to-br from-ivory via-white to-gold-50 dark:from-night-900 dark:via-night-800 dark:to-night-900 overflow-hidden px-6">
-        <img src="/Logo-MARR.png" alt="Jewelry catalog" className="absolute inset-0 w-full h-full object-cover opacity-10" />
+      <section className="page-hero h-64 md:h-80">
+        <img src="/Logo-MARR.png" alt="" className="absolute inset-0 h-full w-full object-cover opacity-10" />
         <RevealSection className="relative z-10 text-center">
-          <h2 className="text-4xl md:text-5xl font-extrabold text-marrGold drop-shadow mb-2 tracking-wide">Jewelry catalog</h2>
-          <p className="text-lg md:text-xl text-gray-800 dark:text-gray-100">Discover unique pieces for every occasion</p>
+          <h2 className="mb-2 text-4xl font-extrabold tracking-wide text-marrGold drop-shadow md:text-5xl">Jewelry catalog</h2>
+          <p className="text-lg text-gray-800 dark:text-gray-100 md:text-xl">Discover unique pieces for every occasion</p>
         </RevealSection>
       </section>
 
       <section className="w-full flex justify-center py-12 px-6 md:px-8">
         <RevealSection className="w-full max-w-5xl">
-          <form className="flex flex-wrap gap-4 bg-white/95 dark:bg-night-800/95 rounded-2xl shadow-lg px-6 py-5 border border-gold-200/60 dark:border-gold-500/20 backdrop-blur-sm items-end">
+          <form className="surface-panel flex flex-wrap items-end gap-4 px-6 py-5 backdrop-blur-sm">
             <div className="flex flex-col flex-1 min-w-[180px]">
               <label className="text-xs font-semibold text-marrGold mb-1 pl-1">Search</label>
               <div className="relative">
                 <input
                   type="text"
-                  className="w-full rounded-lg border border-marrGold bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-marrGold focus:border-marrGold pl-10 pr-4 py-2 text-base"
+                  className="input-marr pl-10"
                   placeholder="Search by name or description…"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -248,7 +248,7 @@ const Catalog = () => {
             <div className="flex flex-col min-w-[140px]">
               <label className="text-xs font-semibold text-marrGold mb-1 pl-1">Category</label>
               <select
-                className="w-full rounded-lg border border-marrGold bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-marrGold focus:border-marrGold py-2 px-3"
+                className="input-marr"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
               >
@@ -266,7 +266,7 @@ const Catalog = () => {
             <div className="flex flex-col min-w-[160px]">
               <label className="text-xs font-semibold text-marrGold mb-1 pl-1">Material</label>
               <select
-                className="w-full rounded-lg border border-marrGold bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-marrGold focus:border-marrGold py-2 px-3"
+                className="input-marr"
                 value={material}
                 onChange={(e) => setMaterial(e.target.value)}
               >
@@ -288,7 +288,7 @@ const Catalog = () => {
                 <input
                   type="number"
                   min="0"
-                  className="w-full rounded-lg border border-marrGold bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-marrGold focus:border-marrGold pl-7 pr-2 py-2"
+                  className="input-marr pl-7"
                   value={minPrice}
                   onChange={(e) => setMinPrice(e.target.value)}
                   placeholder="0"
@@ -302,7 +302,7 @@ const Catalog = () => {
                 <input
                   type="number"
                   min="0"
-                  className="w-full rounded-lg border border-marrGold bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-marrGold focus:border-marrGold pl-7 pr-2 py-2"
+                  className="input-marr pl-7"
                   value={maxPrice}
                   onChange={(e) => setMaxPrice(e.target.value)}
                   placeholder="0"
@@ -312,7 +312,7 @@ const Catalog = () => {
             <div className="flex flex-col min-w-[150px]">
               <label className="text-xs font-semibold text-marrGold mb-1 pl-1">Sort by</label>
               <select
-                className="w-full rounded-lg border border-marrGold bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-marrGold focus:border-marrGold py-2 px-3"
+                className="input-marr"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
               >
@@ -380,10 +380,7 @@ const Catalog = () => {
       <section className="max-w-4xl mx-auto text-center py-20 px-6">
         <RevealSection>
           <h3 className="text-2xl font-semibold text-marrGold mb-4">Looking for something one of a kind?</h3>
-          <Link
-            to="/custom-order"
-            className="inline-block bg-gold-500 text-white px-8 py-3 rounded-full shadow-lg hover:bg-gold-600 transition-all duration-200 text-lg font-semibold"
-          >
+          <Link to="/custom-order" className="btn-marr !rounded-full px-8 py-3 text-lg">
             Customize your jewelry
           </Link>
         </RevealSection>

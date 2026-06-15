@@ -105,7 +105,7 @@ const UserManagement = () => {
   return (
     <>
       <AdminNavbar />
-      <div className="w-full min-h-screen bg-ivory dark:bg-night-900 transition-colors pt-24">
+      <div className="admin-page">
         <section className="relative h-40 flex items-center justify-center bg-gradient-to-br from-ivory via-white to-gold-50 dark:from-night-900 dark:via-night-800 dark:to-night-900 overflow-hidden px-6">
           <div className="relative z-10 text-center">
             <h1 className="text-3xl md:text-4xl font-bold text-marrGold">User management</h1>

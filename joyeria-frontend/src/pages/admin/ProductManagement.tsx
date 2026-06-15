@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../../utils/api';
-import type { Product, PagedResult, MaterialRef } from '../../types';
+import type { Product, PagedResult, MaterialRef, ProductImageRef } from '../../types';
 import AdminNavbar from '../../components/layout/AdminNavbar';
 import TablePagination, { ADMIN_TABLE_PAGE_SIZE } from '../../components/admin/TablePagination';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
@@ -30,6 +30,9 @@ const ProductManagement = () => {
   const [currentProduct, setCurrentProduct] = useState<Partial<Product>>(emptyProduct);
   const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [extraImages, setExtraImages] = useState<File[]>([]);
+  const [galleryImages, setGalleryImages] = useState<ProductImageRef[]>([]);
+  const [removeImageIds, setRemoveImageIds] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -101,6 +104,9 @@ const ProductManagement = () => {
       materialId: product.materialId ?? undefined,
     });
     setCurrentImageUrl(product.imageUrl || null);
+    setGalleryImages(product.images ?? []);
+    setRemoveImageIds([]);
+    setExtraImages([]);
     setSelectedImage(null);
     setIsEditing(true);
     setIsModalOpen(true);
@@ -172,6 +178,11 @@ const ProductManagement = () => {
         formData.append('imageUrl', currentProduct.imageUrl);
       }
 
+      extraImages.forEach((file) => formData.append('imagenes', file));
+      if (removeImageIds.length > 0) {
+        formData.append('removeImageIds', removeImageIds.join(','));
+      }
+
       if (isEditing && currentProduct.id) {
         await api.put(`/api/products/${currentProduct.id}`, formData);
       } else {
@@ -198,17 +209,20 @@ const ProductManagement = () => {
     setCurrentProduct({ ...emptyProduct });
     setCurrentImageUrl(null);
     setSelectedImage(null);
+    setExtraImages([]);
+    setGalleryImages([]);
+    setRemoveImageIds([]);
     setError(null);
   };
 
   return (
     <>
       <AdminNavbar />
-      <div className="w-full min-h-screen bg-ivory dark:bg-night-900 transition-colors pt-24">
-        <section className="relative h-40 flex items-center justify-center bg-gradient-to-br from-ivory via-white to-gold-50 dark:from-night-900 dark:via-night-800 dark:to-night-900 overflow-hidden px-6">
+      <div className="admin-page">
+        <section className="page-hero h-40">
           <div className="relative z-10 text-center">
-            <h1 className="text-3xl md:text-4xl font-bold text-marrGold">Product management</h1>
-            <p className="text-gray-700 dark:text-gray-300 mt-1">Catalog, stock and images</p>
+            <h1 className="text-3xl font-bold text-marrGold md:text-4xl">Product management</h1>
+            <p className="mt-1 text-muted">Catalog, stock and images</p>
           </div>
         </section>
 
@@ -511,32 +525,50 @@ const ProductManagement = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Image</label>
+                  <label className="label-marr">Primary image</label>
+                  <input type="file" accept="image/*" onChange={handleImageChange} className="input-marr !py-2" />
+                  {currentImageUrl && currentImageUrl.length > 0 ? (
+                    <div className="mt-2">
+                      <p className="text-sm text-muted">Primary preview:</p>
+                      <img src={currentImageUrl} alt="Preview" className="mt-1 h-32 w-32 rounded-lg border border-gold-200/60 object-cover shadow-md dark:border-gold-500/20" />
+                    </div>
+                  ) : (
+                    isEditing && <p className="mt-2 text-sm text-muted">No primary image selected.</p>
+                  )}
+                </div>
+                <div>
+                  <label className="label-marr">Gallery images (optional)</label>
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={handleImageChange}
-                    className="mt-1 block w-full text-gray-900 dark:text-gray-100 bg-white dark:bg-night-700 border border-gold-200 dark:border-gold-500/30 rounded-lg"
+                    multiple
+                    onChange={(e) => setExtraImages(e.target.files ? Array.from(e.target.files) : [])}
+                    className="input-marr !py-2"
                   />
-                  {currentImageUrl && currentImageUrl.length > 0 ? (
-                    <div className="mt-2">
-                      <p className="text-sm text-gray-500 dark:text-gray-300">Current image:</p>
-                      <img
-                        src={currentImageUrl}
-                        alt="Preview"
-                        className="mt-1 h-32 w-32 object-cover rounded-lg shadow-md border border-gold-200/60 dark:border-gold-500/20"
-                      />
+                  {galleryImages.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {galleryImages
+                        .filter((img) => !removeImageIds.includes(img.id))
+                        .map((img) => (
+                          <div key={img.id} className="relative">
+                            <img src={img.url} alt="" className="h-16 w-16 rounded-lg border border-gold-200/60 object-cover dark:border-gold-500/30" />
+                            <button
+                              type="button"
+                              onClick={() => setRemoveImageIds((ids) => [...ids, img.id])}
+                              className="absolute -right-1 -top-1 rounded-full bg-red-600 px-1.5 text-xs text-white"
+                              aria-label="Remove image"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
                     </div>
-                  ) : (
-                    isEditing && <p className="mt-2 text-sm text-gray-500 dark:text-gray-300">No image selected.</p>
+                  )}
+                  {extraImages.length > 0 && (
+                    <p className="mt-2 text-sm text-muted">{extraImages.length} new image(s) will be added.</p>
                   )}
                 </div>
-                {error && isModalOpen && (
-                  <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 px-4 py-3 rounded relative">
-                    <strong className="font-bold">Error: </strong>
-                    <span className="block sm:inline">{error}</span>
-                  </div>
-                )}
+                {error && isModalOpen && <div className="alert-error">{error}</div>}
                 <div className="flex justify-end space-x-4 mt-6">
                   <button
                     type="button"
